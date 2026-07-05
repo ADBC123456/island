@@ -8,18 +8,20 @@ export class WindowManager {
   private window: BrowserWindow | null = null;
 
   create(): BrowserWindow {
+    const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
+
     this.window = new BrowserWindow({
       width: 760,
       height: 380,
-      frame: false,
-      transparent: true,
-      resizable: false,
-      movable: false,
+      frame: isDev,
+      transparent: !isDev,
+      resizable: isDev,
+      movable: isDev,
       alwaysOnTop: true,
-      skipTaskbar: true,
+      skipTaskbar: !isDev,
       show: false,
-      hasShadow: false,
-      backgroundColor: '#00000000',
+      hasShadow: isDev,
+      backgroundColor: isDev ? '#202026' : '#00000000',
       webPreferences: {
         preload: path.join(__dirname, '../preload/index.js'),
         contextIsolation: true,
@@ -28,7 +30,24 @@ export class WindowManager {
     });
 
     this.window.setAlwaysOnTop(true, 'screen-saver');
-    this.positionTopCenter();
+
+    if (isDev) {
+      this.window.center();
+    } else {
+      this.positionTopCenter();
+    }
+
+    this.window.webContents.on('did-finish-load', () => {
+      console.log('[window] renderer loaded');
+    });
+
+    this.window.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+      console.error('[window] renderer failed to load', errorCode, errorDescription);
+    });
+
+    if (isDev) {
+      this.window.webContents.openDevTools({ mode: 'detach' });
+    }
 
     if (process.env.VITE_DEV_SERVER_URL) {
       void this.window.loadURL(process.env.VITE_DEV_SERVER_URL);
@@ -46,9 +65,14 @@ export class WindowManager {
 
   showIsland(): void {
     const win = this.getWindow();
-    this.positionTopCenter();
+    if (process.env.VITE_DEV_SERVER_URL) {
+      win.center();
+    } else {
+      this.positionTopCenter();
+    }
     win.show();
     win.focus();
+    console.log('[window] showIsland', win.getBounds());
     win.webContents.send('island:show');
   }
 
