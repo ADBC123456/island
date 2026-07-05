@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyCaseStyle } from '../caseStyle';
+import { applyCaseStyle } from '../caseStyle.js';
 
 describe('applyCaseStyle', () => {
   it('formats camelCase', () => {

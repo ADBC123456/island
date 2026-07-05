@@ -1,7 +1,7 @@
 import type { GenerateNameRequest, GenerateNameResult } from '@variable-island/shared';
-import { AiNameGenerator } from './aiNameGenerator';
-import { LocalNameGenerator } from './localNameGenerator';
-import type { NameGenerator } from './types';
+import { AiNameGenerator } from './aiNameGenerator.js';
+import { LocalNameGenerator } from './localNameGenerator.js';
+import type { NameGenerator } from './types.js';
 
 export class HybridNameGenerator implements NameGenerator {
   constructor(

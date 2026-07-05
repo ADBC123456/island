@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LocalNameGenerator } from '../localNameGenerator';
+import { LocalNameGenerator } from '../localNameGenerator.js';
 
 describe('LocalNameGenerator', () => {
   it('generates boolean modal candidates from Chinese description', async () => {

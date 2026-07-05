@@ -1,8 +1,8 @@
 import type { GenerateNameRequest, GenerateNameResult, NameCandidate } from '@variable-island/shared';
-import { applyCaseStyle } from './caseStyle';
-import { translateDescription } from './dictionary';
-import { inferVariableType } from './typeInference';
-import type { NameGenerator } from './types';
+import { applyCaseStyle } from './caseStyle.js';
+import { translateDescription } from './dictionary.js';
+import { inferVariableType } from './typeInference.js';
+import type { NameGenerator } from './types.js';
 
 function unique<T>(items: T[]): T[] {
   return Array.from(new Set(items));

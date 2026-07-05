@@ -1,6 +1,6 @@
-export type { NameGenerator } from './types';
-export { applyCaseStyle } from './caseStyle';
-export { LocalNameGenerator } from './localNameGenerator';
-export { AiNameGenerator } from './aiNameGenerator';
-export { HybridNameGenerator } from './hybridNameGenerator';
-export { inferVariableType } from './typeInference';
+export type { NameGenerator } from './types.js';
+export { applyCaseStyle } from './caseStyle.js';
+export { LocalNameGenerator } from './localNameGenerator.js';
+export { AiNameGenerator } from './aiNameGenerator.js';
+export { HybridNameGenerator } from './hybridNameGenerator.js';
+export { inferVariableType } from './typeInference.js';
