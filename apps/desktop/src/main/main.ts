@@ -1,5 +1,6 @@
 import { app, type Event } from 'electron';
 import { registerIpcHandlers } from './ipcHandlers.js';
+import { startMouseEdgeWatcher, stopMouseEdgeWatcher } from './mouseEdgeWatcher.js';
 import { registerShortcuts, unregisterShortcuts } from './shortcutManager.js';
 import { WindowManager } from './windowManager.js';
 
@@ -11,6 +12,7 @@ async function bootstrap(): Promise<void> {
   windowManager.create();
   registerIpcHandlers(windowManager);
   registerShortcuts(windowManager);
+  startMouseEdgeWatcher(windowManager);
 
   app.on('activate', () => {
     windowManager.showIsland();
@@ -18,6 +20,7 @@ async function bootstrap(): Promise<void> {
 }
 
 app.on('will-quit', () => {
+  stopMouseEdgeWatcher();
   unregisterShortcuts();
 });
 
