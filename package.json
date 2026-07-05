@@ -1,0 +1,16 @@
+{
+  "name": "variable-island",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Windows Dynamic Island style variable name generator.",
+  "scripts": {
+    "dev": "pnpm --filter @variable-island/desktop dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "typescript": "^5.5.3"
+  }
+}
