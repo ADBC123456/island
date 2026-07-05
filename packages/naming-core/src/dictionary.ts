@@ -1,0 +1,33 @@
+export const builtInDictionary: Record<string, string[]> = {
+  是否: ['is', 'should'],
+  显示: ['show', 'visible'],
+  隐藏: ['hidden', 'hide'],
+  用户: ['user'],
+  弹窗: ['modal', 'dialog'],
+  名称: ['name'],
+  名字: ['name'],
+  商品: ['product'],
+  列表: ['list', 'items'],
+  数据: ['data'],
+  状态: ['status', 'state'],
+  登录: ['login', 'loggedIn', 'auth'],
+  加载: ['loading', 'load'],
+  配置: ['config', 'settings'],
+  请求: ['request'],
+  响应: ['response'],
+  参数: ['params'],
+  数量: ['count'],
+  索引: ['index'],
+  错误: ['error'],
+  成功: ['success']
+};
+
+export function translateDescription(description: string): string[][] {
+  const hits: string[][] = [];
+  for (const [source, translations] of Object.entries(builtInDictionary)) {
+    if (description.includes(source)) {
+      hits.push(translations);
+    }
+  }
+  return hits;
+}
