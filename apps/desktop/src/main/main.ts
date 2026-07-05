@@ -14,6 +14,13 @@ async function bootstrap(): Promise<void> {
   registerShortcuts(windowManager);
   startMouseEdgeWatcher(windowManager);
 
+  if (process.env.VITE_DEV_SERVER_URL) {
+    setTimeout(() => {
+      console.log('[dev] showing island once for startup diagnostics');
+      windowManager.showIsland();
+    }, 1000);
+  }
+
   app.on('activate', () => {
     windowManager.showIsland();
   });

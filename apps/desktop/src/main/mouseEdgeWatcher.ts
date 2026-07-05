@@ -34,6 +34,7 @@ export function startMouseEdgeWatcher(windowManager: WindowManager): void {
     isTriggering = true;
     lastTriggeredAt = now;
     try {
+      console.log('[mouse-edge] top-center trigger', point);
       await rememberActiveWindow();
       windowManager.showIsland();
     } finally {
