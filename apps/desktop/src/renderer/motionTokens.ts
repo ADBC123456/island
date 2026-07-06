@@ -7,18 +7,20 @@
  * Expand is allowed to be a spring for a livelier open.
  */
 
-// Expand: spring with a small overshoot — feels alive without drifting.
+// Expand: spring with a tiny overshoot — feels alive without drifting.
+// Stiffness high enough that the open starts immediately (no lag), damping
+// firm enough that it settles in ~320ms without a visible second bounce.
 export const shellExpandTransition = {
   type: 'spring',
-  stiffness: 380,
-  damping: 30,
-  mass: 0.9
+  stiffness: 460,
+  damping: 34,
+  mass: 0.85
 } as const;
 
-// Retract: deterministic tween, no overshoot, ~360ms.
+// Retract: deterministic tween, no overshoot, ~380ms.
 export const shellRetractTransition = {
   type: 'tween' as const,
-  duration: 0.36,
+  duration: 0.38,
   ease: [0.22, 1, 0.36, 1] as [number, number, number, number]
 };
 

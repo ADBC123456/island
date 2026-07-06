@@ -96,6 +96,8 @@ button {
   pointer-events: auto;
   overflow: hidden;
   isolation: isolate;
+  contain: layout paint;
+  will-change: width, height, border-radius, transform;
   transform: translateZ(0);
   color: var(--ink);
   background:
@@ -313,13 +315,14 @@ button {
 .island-content {
   position: relative;
   z-index: 4;
-  padding: 0 16px 15px;
+  padding: 0 28px 15px;
 }
 
 .island-shell-compact .island-content {
   height: 56px;
   display: grid;
   align-items: center;
+  padding-inline: 28px;
   padding-block: 0;
 }
 

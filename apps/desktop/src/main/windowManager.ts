@@ -7,12 +7,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WINDOW_PADDING_X = 8;
 const WINDOW_PADDING_TOP = 8;
 const WINDOW_PADDING_BOTTOM = 10;
-// Time for the renderer's retract animation to settle before the OS window
-// shrinks down. Must stay in sync with shellRetractAnimationMs in
+export const RETRACT_ANIMATION_MS = 380;
+// Time for the renderer's retract animation to settle before hiding the native
+// window. Must stay in sync with shellRetractAnimationMs in
 // src/renderer/motionTokens.ts (main cannot import that ESM module).
-const SHRINK_DELAY_MS = 360;
-export const RETRACT_ANIMATION_MS = 360;
-const COMPACT_SHRINK_DELAY_MS = RETRACT_ANIMATION_MS;
 const SHOW_BLUR_GRACE_MS = 360;
 
 interface IslandSize {
@@ -30,7 +28,6 @@ const fallbackDimensions: Record<Exclude<IslandStatus, 'hidden'>, IslandSize> = 
 
 export class WindowManager {
   private window: BrowserWindow | null = null;
-  private pendingShrink: NodeJS.Timeout | null = null;
   private pendingHideRequest: NodeJS.Timeout | null = null;
   private anchorCenterX: number | null = null;
   private ignoreBlurUntil = 0;
@@ -158,7 +155,6 @@ export class WindowManager {
       return;
     }
 
-    this.clearPendingShrink();
     this.clearPendingHideRequest();
     this.setIgnoreMouseEvents(true);
     this.window.webContents.send('island:hide-request');
@@ -169,7 +165,6 @@ export class WindowManager {
   }
 
   hideIsland(): void {
-    this.clearPendingShrink();
     this.clearPendingHideRequest();
     if (!this.window) return;
     // Reset to compact footprint so the next summon starts clean and no
@@ -196,34 +191,32 @@ export class WindowManager {
 
   /**
    * Resize the OS window to fit the island.
-   * Growing applies immediately; shrinking waits for the renderer's spring to
-   * settle so the island is never clipped mid-animation. In between, the
-   * window covers the union of the old and new bounds (it is transparent, so
-   * the extra area is invisible).
+   * Growing applies immediately so expanded content is never clipped. Visible
+   * shrink requests are intentionally ignored: the renderer owns the compact
+   * morph, and a native shrink on the same surface can force backdrop-filter to
+   * resample as a rectangular frame. hideIsland resets the native footprint
+   * once the shell is no longer visible.
    */
   setIslandStatus(status: IslandStatus, size?: IslandSize): void {
     if (!this.window || process.env.VARIABLE_ISLAND_DIAGNOSTIC_WINDOW === '1') return;
 
-    this.clearPendingShrink();
     if (status === 'hidden') return;
 
     const island = size ?? fallbackDimensions[status];
     const targetWidth = island.width + WINDOW_PADDING_X * 2;
     const targetHeight = island.height + WINDOW_PADDING_TOP + WINDOW_PADDING_BOTTOM;
     const current = this.window.getBounds();
+    const isVisible = this.window.isVisible();
 
-    const unionWidth = Math.max(targetWidth, this.window.isVisible() ? current.width : 0);
-    const unionHeight = Math.max(targetHeight, this.window.isVisible() ? current.height : 0);
+    if (!isVisible) {
+      this.resizeAroundCurrentTopCenter(targetWidth, targetHeight);
+      return;
+    }
 
-    this.resizeAroundCurrentTopCenter(unionWidth, unionHeight);
-
-    if (unionWidth !== targetWidth || unionHeight !== targetHeight) {
-      const shrinkDelay = status === 'compact' ? COMPACT_SHRINK_DELAY_MS : SHRINK_DELAY_MS;
-      this.pendingShrink = setTimeout(() => {
-        this.pendingShrink = null;
-        if (!this.window || this.window.isDestroyed()) return;
-        this.resizeAroundCurrentTopCenter(targetWidth, targetHeight);
-      }, shrinkDelay);
+    const unionWidth = Math.max(targetWidth, current.width);
+    const unionHeight = Math.max(targetHeight, current.height);
+    if (unionWidth !== current.width || unionHeight !== current.height) {
+      this.resizeAroundCurrentTopCenter(unionWidth, unionHeight);
     }
   }
 
@@ -261,13 +254,6 @@ export class WindowManager {
       width,
       height
     }, false);
-  }
-
-  private clearPendingShrink(): void {
-    if (this.pendingShrink) {
-      clearTimeout(this.pendingShrink);
-      this.pendingShrink = null;
-    }
   }
 
   private clearPendingHideRequest(): void {
