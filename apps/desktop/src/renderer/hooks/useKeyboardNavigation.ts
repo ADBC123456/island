@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import type { CaseStyle } from '@variable-island/shared';
 import type { IslandState } from './useIslandState';
 
-const rules: CaseStyle[] = ['camelCase', 'PascalCase', 'Hungarian'];
+const rules: CaseStyle[] = ['camelCase', 'PascalCase', 'snake_case', 'CONSTANT_CASE', 'Hungarian'];
 
 export function useKeyboardNavigation(
   state: IslandState,

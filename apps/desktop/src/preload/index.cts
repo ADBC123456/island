@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-type CaseStyle = 'camelCase' | 'PascalCase' | 'Hungarian';
+type CaseStyle = 'camelCase' | 'PascalCase' | 'snake_case' | 'CONSTANT_CASE' | 'Hungarian';
 type IslandStatus = 'hidden' | 'compact' | 'expanded' | 'success' | 'error';
 type VariableType = 'auto' | 'boolean' | 'string' | 'number' | 'array' | 'object' | 'function';
 

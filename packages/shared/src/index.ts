@@ -1,4 +1,4 @@
-export type CaseStyle = 'camelCase' | 'PascalCase' | 'Hungarian';
+export type CaseStyle = 'camelCase' | 'PascalCase' | 'snake_case' | 'CONSTANT_CASE' | 'Hungarian';
 
 export type VariableType =
   | 'auto'
@@ -28,7 +28,7 @@ export interface NameCandidate {
 export interface GenerateNameResult {
   candidates: NameCandidate[];
   translatedDescription?: string;
-  translationProvider?: 'deeplx' | 'local';
+  translationProvider?: 'deeplx' | 'none';
 }
 
 export interface InsertTextRequest {
@@ -51,7 +51,7 @@ export interface AppConfig {
   restoreClipboardAfterInsert: boolean;
   theme: 'dark-glass';
   animationLevel: 'full' | 'reduced';
-  translationProvider: 'deeplx' | 'local';
+  translationProvider: 'deeplx' | 'disabled';
   deeplxUrl: string;
   deeplxToken: string;
   deeplxSourceLang: string;

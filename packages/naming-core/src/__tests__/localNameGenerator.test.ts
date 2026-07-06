@@ -2,42 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { LocalNameGenerator } from '../localNameGenerator.js';
 
 describe('LocalNameGenerator', () => {
-  it('generates boolean modal candidates from Chinese description', async () => {
-    const generator = new LocalNameGenerator();
-    const result = await generator.generate({
-      description: '是否显示用户弹窗',
-      caseStyle: 'camelCase',
-      variableType: 'auto'
-    });
-
-    expect(result.candidates.map((candidate) => candidate.name)).toContain('isUserModalVisible');
-    expect(result.candidates[0]?.score).toBeGreaterThan(0.5);
-  });
-
-  it('generates PascalCase for product list', async () => {
-    const generator = new LocalNameGenerator();
-    const result = await generator.generate({
-      description: '商品列表',
-      caseStyle: 'PascalCase',
-      variableType: 'array'
-    });
-
-    expect(result.candidates.map((candidate) => candidate.name)).toContain('ProductList');
-  });
-
-  it('does not append visible for non-visibility boolean descriptions', async () => {
-    const generator = new LocalNameGenerator();
-    const result = await generator.generate({
-      description: '是否启用缓存',
-      caseStyle: 'camelCase',
-      variableType: 'auto'
-    });
-
-    expect(result.candidates.map((candidate) => candidate.name)).toContain('isEnabledCache');
-    expect(result.candidates.map((candidate) => candidate.name)).not.toContain('isEnabledCacheVisible');
-  });
-
-  it('generates candidates from expanded programming dictionary', async () => {
+  it('does not generate from the removed local dictionary', async () => {
     const generator = new LocalNameGenerator();
     const result = await generator.generate({
       description: '分页请求参数',
@@ -45,33 +10,86 @@ describe('LocalNameGenerator', () => {
       variableType: 'auto'
     });
 
-    expect(result.candidates.map((candidate) => candidate.name)).toContain('paginationRequestParams');
+    expect(result.candidates).toEqual([]);
+    expect(result.translationProvider).toBe('none');
   });
 
-  it('uses translated description before local dictionary fallback', async () => {
+  it('generates Codelf-style boolean candidates from translated text', async () => {
+    const generator = new LocalNameGenerator();
+    const result = await generator.generate({
+      description: '是否显示用户弹窗',
+      translatedDescription: 'Whether to show user popup',
+      caseStyle: 'camelCase',
+      variableType: 'auto'
+    });
+
+    expect(result.translationProvider).toBe('deeplx');
+    expect(result.candidates.map((candidate) => candidate.name)).toContain('isUserModalVisible');
+    expect(result.candidates.map((candidate) => candidate.name)).toContain('shouldShowUserModal');
+    expect(result.candidates[0]?.reason).toBe('codelf boolean rule');
+  });
+
+  it('keeps enable/disable descriptions as boolean names', async () => {
     const generator = new LocalNameGenerator();
     const result = await generator.generate({
       description: '是否启用缓存',
-      translatedDescription: 'whether to enable cache',
+      translatedDescription: 'Whether to enable caching',
       caseStyle: 'camelCase',
       variableType: 'auto'
     });
 
-    expect(result.translatedDescription).toBe('whether to enable cache');
-    expect(result.translationProvider).toBe('deeplx');
-    expect(result.candidates[0]?.name).toBe('isEnabledCache');
-    expect(result.candidates[0]?.reason).toBe('deeplx translation');
+    expect(result.candidates.map((candidate) => candidate.name)).toContain('isEnabledCache');
+    expect(result.candidates.map((candidate) => candidate.name)).toContain('shouldEnableCache');
+    expect(result.candidates.map((candidate) => candidate.name)).not.toContain('isEnabledCacheVisible');
   });
 
-  it('builds names from translated English phrases when the local dictionary is incomplete', async () => {
+  it('generates collection names from translated text', async () => {
     const generator = new LocalNameGenerator();
     const result = await generator.generate({
-      description: '装载完成标记',
-      translatedDescription: 'page load complete flag',
+      description: '商品列表',
+      translatedDescription: 'product list',
+      caseStyle: 'PascalCase',
+      variableType: 'array'
+    });
+
+    expect(result.candidates.map((candidate) => candidate.name)).toContain('ProductList');
+    expect(result.candidates.map((candidate) => candidate.name)).toContain('Products');
+  });
+
+  it('generates snake_case names', async () => {
+    const generator = new LocalNameGenerator();
+    const result = await generator.generate({
+      description: '分页请求参数',
+      translatedDescription: 'pagination request parameters',
+      caseStyle: 'snake_case',
+      variableType: 'auto'
+    });
+
+    expect(result.candidates.map((candidate) => candidate.name)).toContain('pagination_request_params');
+  });
+
+  it('generates CONSTANT_CASE names', async () => {
+    const generator = new LocalNameGenerator();
+    const result = await generator.generate({
+      description: '最大重试次数',
+      translatedDescription: 'maximum retry count',
+      caseStyle: 'CONSTANT_CASE',
+      variableType: 'number'
+    });
+
+    expect(result.candidates.map((candidate) => candidate.name)).toContain('MAXIMUM_RETRY_COUNT');
+  });
+
+  it('generates function-style candidates from action words', async () => {
+    const generator = new LocalNameGenerator();
+    const result = await generator.generate({
+      description: '校验用户输入',
+      translatedDescription: 'validate user input',
       caseStyle: 'camelCase',
       variableType: 'auto'
     });
 
-    expect(result.candidates.map((candidate) => candidate.name)).toContain('pageLoadCompleteFlag');
+    expect(result.candidates[0]?.name).toBe('validateUserInput');
+    expect(result.candidates[0]?.reason).toBe('codelf function rule');
   });
 });

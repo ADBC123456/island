@@ -1,11 +1,12 @@
-import type { GenerateNameRequest, GenerateNameResult, NameCandidate } from '@variable-island/shared';
+import type { GenerateNameRequest, GenerateNameResult, NameCandidate, VariableType } from '@variable-island/shared';
 import { applyCaseStyle } from './caseStyle.js';
-import { translateDescription } from './dictionary.js';
 import { inferVariableType } from './typeInference.js';
 import type { NameGenerator } from './types.js';
 
-function pickPrimaryWords(groups: string[][]): string[] {
-  return groups.map((group) => group[0]!).filter(Boolean);
+interface WordSet {
+  words: string[];
+  reason: string;
+  weight: number;
 }
 
 const englishStopWords = new Set([
@@ -22,20 +23,88 @@ const englishStopWords = new Set([
   'for',
   'from',
   'if',
+  'in',
+  'into',
   'is',
   'of',
   'on',
   'or',
+  'that',
   'the',
+  'this',
   'to',
   'whether',
   'with'
 ]);
 
+const booleanSyntaxWords = new Set([
+  'are',
+  'be',
+  'been',
+  'being',
+  'can',
+  'could',
+  'did',
+  'do',
+  'does',
+  'has',
+  'have',
+  'is',
+  'should',
+  'whether',
+  'will'
+]);
+
+const actionWords = new Set([
+  'add',
+  'build',
+  'calculate',
+  'clear',
+  'close',
+  'copy',
+  'create',
+  'delete',
+  'download',
+  'fetch',
+  'filter',
+  'format',
+  'get',
+  'handle',
+  'load',
+  'open',
+  'parse',
+  'remove',
+  'render',
+  'reset',
+  'save',
+  'search',
+  'select',
+  'send',
+  'set',
+  'sort',
+  'submit',
+  'sync',
+  'toggle',
+  'update',
+  'upload',
+  'validate'
+]);
+
+const genericTailWords = new Set([
+  'data',
+  'flag',
+  'info',
+  'object',
+  'value'
+]);
+
 const wordAliases: Record<string, string> = {
-  active: 'active',
-  closed: 'closed',
-  closing: 'closed',
+  amount: 'amount',
+  argument: 'arg',
+  arguments: 'args',
+  cache: 'cache',
+  cached: 'cached',
+  caching: 'cache',
   config: 'config',
   configuration: 'config',
   configurations: 'config',
@@ -54,18 +123,27 @@ const wordAliases: Record<string, string> = {
   hiding: 'hidden',
   identifier: 'id',
   identifiers: 'ids',
+  image: 'image',
+  images: 'images',
   info: 'info',
   information: 'info',
+  item: 'item',
+  items: 'items',
   list: 'list',
   lists: 'list',
+  loading: 'loading',
   modal: 'modal',
   modals: 'modal',
+  number: 'count',
   opened: 'open',
   opening: 'open',
   parameter: 'params',
   parameters: 'params',
   params: 'params',
+  picture: 'image',
+  pictures: 'images',
   popup: 'modal',
+  quantity: 'count',
   request: 'request',
   requests: 'requests',
   response: 'response',
@@ -75,11 +153,28 @@ const wordAliases: Record<string, string> = {
   visible: 'visible'
 };
 
+const adjectiveToVerb: Record<string, string> = {
+  active: 'activate',
+  closed: 'close',
+  disabled: 'disable',
+  enabled: 'enable',
+  hidden: 'hide',
+  open: 'open',
+  selected: 'select',
+  visible: 'show'
+};
+
+function unique<T>(items: T[]): T[] {
+  return Array.from(new Set(items));
+}
+
 function normalizeEnglishToken(token: string): string {
   const lower = token.toLowerCase();
   if (/^\d+$/.test(lower)) return lower;
   if (lower.endsWith('ies') && lower.length > 3) return `${lower.slice(0, -3)}y`;
   if (wordAliases[lower]) return wordAliases[lower];
+  if (lower.endsWith('ing') && lower.length > 5) return lower.slice(0, -3);
+  if (lower.endsWith('ed') && lower.length > 4) return lower.slice(0, -2);
   if (lower.endsWith('s') && lower.length > 3 && !/(ss|us|is)$/.test(lower)) return lower.slice(0, -1);
   return lower;
 }
@@ -89,112 +184,156 @@ function extractTranslatedWords(translatedDescription?: string): string[] {
 
   const rawTokens = translatedDescription
     .replace(/pop[\s-]+up/gi, ' popup ')
-    .split(/[^a-zA-Z0-9]+/)
+    .split(/[^a-zA-Z0-9$]+/)
     .map((part) => part.trim())
     .filter(Boolean);
 
   const words: string[] = [];
   for (const token of rawTokens) {
-    const lower = token.toLowerCase();
-    const previous = words.at(-1);
-    if (englishStopWords.has(lower) && !(lower === 'in' && previous === 'logged')) continue;
-
-    const normalized = normalizeEnglishToken(lower);
-    if (!normalized || words.at(-1) === normalized) continue;
+    const normalized = normalizeEnglishToken(token);
+    if (!normalized || englishStopWords.has(normalized)) continue;
+    if (words.at(-1) === normalized) continue;
     words.push(normalized);
   }
 
-  return words;
+  return unique(words).filter((word) => word.length < 32);
 }
 
-function makeBooleanAlternatives(words: string[], description: string): string[][] {
-  const withoutBooleanSyntax = words.filter((word) => ![
-    'are',
-    'be',
-    'been',
-    'being',
-    'can',
-    'display',
-    'displayed',
-    'displaying',
-    'is',
-    'should',
-    'show',
-    'whether'
-  ].includes(word));
-  const shouldAppendVisible = words.includes('visible') || words.includes('show') || /显示|可见/.test(description);
-  const withoutVisible = withoutBooleanSyntax.filter((word) => word !== 'visible');
-  const visibleWords = withoutBooleanSyntax.includes('visible')
-    ? withoutBooleanSyntax
-    : shouldAppendVisible
-      ? [...withoutVisible, 'visible']
-      : withoutBooleanSyntax;
+function stripBooleanSyntax(words: string[]): string[] {
+  return words.filter((word) => !booleanSyntaxWords.has(word));
+}
+
+function removeWords(words: string[], remove: Set<string>): string[] {
+  return words.filter((word) => !remove.has(word));
+}
+
+function compactWords(words: string[]): string[] {
+  if (words.length <= 2) return words;
+  const compacted = [...words];
+  while (compacted.length > 2 && genericTailWords.has(compacted.at(-1)!)) {
+    compacted.pop();
+  }
+  return compacted;
+}
+
+function pluralize(word: string): string {
+  if (word.endsWith('s')) return word;
+  if (word.endsWith('y')) return `${word.slice(0, -1)}ies`;
+  if (/(x|ch|sh)$/.test(word)) return `${word}es`;
+  return `${word}s`;
+}
+
+function verbPhrase(words: string[]): string[] {
+  if (words.length === 0) return [];
+  const [first, ...rest] = words;
+  const verb = adjectiveToVerb[first!] ?? first!;
+  return [verb, ...rest];
+}
+
+function makeBooleanWordSets(words: string[]): WordSet[] {
+  const semanticWords = stripBooleanSyntax(words);
+  const withoutShow = removeWords(semanticWords, new Set(['display', 'show']));
+  const shouldAppendVisible = semanticWords.some((word) => ['display', 'show', 'visible'].includes(word));
+  const visibleWords = shouldAppendVisible
+    ? [...removeWords(withoutShow, new Set(['visible'])), 'visible']
+    : semanticWords;
+  const hasWords = semanticWords.includes('exists')
+    ? ['has', ...removeWords(semanticWords, new Set(['exists']))]
+    : [];
+
   return [
-    ['is', ...visibleWords.filter((word) => word !== 'is')],
-    shouldAppendVisible
-      ? ['should', 'show', ...withoutVisible]
-      : ['should', ...withoutBooleanSyntax]
+    { words: ['is', ...visibleWords], reason: 'codelf boolean rule', weight: 1 },
+    { words: ['should', ...verbPhrase(semanticWords)], reason: 'codelf boolean rule', weight: 0.94 },
+    ...(hasWords.length > 1 ? [{ words: hasWords, reason: 'codelf boolean rule', weight: 0.9 }] : [])
   ];
 }
 
-function sanitizeEnglishFallback(description: string): string[] {
-  const ascii = description
-    .replace(/[^a-zA-Z0-9\s_-]/g, ' ')
-    .split(/[\s_-]+/)
-    .map((part) => part.trim().toLowerCase())
-    .filter(Boolean);
-  return ascii.length > 0 ? ascii : ['value'];
+function makeArrayWordSets(words: string[]): WordSet[] {
+  const itemWords = removeWords(words, new Set(['array', 'collection', 'items', 'list', 'lists']));
+  const base = itemWords.length > 0 ? itemWords : words;
+  const item = base.at(-1);
+
+  return [
+    { words: [...base, 'list'], reason: 'codelf collection rule', weight: 1 },
+    ...(item ? [{ words: [...base.slice(0, -1), pluralize(item)], reason: 'codelf collection rule', weight: 0.94 }] : []),
+    { words: [...base, 'items'], reason: 'codelf collection rule', weight: 0.9 }
+  ];
+}
+
+function makeFunctionWordSets(words: string[]): WordSet[] {
+  const startsWithAction = actionWords.has(words[0] ?? '');
+  return [
+    { words: startsWithAction ? words : ['handle', ...words], reason: 'codelf function rule', weight: 1 },
+    ...(startsWithAction ? [] : [{ words: ['get', ...words], reason: 'codelf function rule', weight: 0.92 }]),
+    { words: verbPhrase(words), reason: 'codelf function rule', weight: 0.88 }
+  ];
+}
+
+function makeObjectWordSets(words: string[], variableType: VariableType): WordSet[] {
+  const sets: WordSet[] = [
+    { words, reason: 'codelf direct phrase', weight: 1 }
+  ];
+
+  const compact = compactWords(words);
+  if (compact.join('|') !== words.join('|')) {
+    sets.push({ words: compact, reason: 'codelf compact phrase', weight: 0.9 });
+  }
+
+  if (variableType === 'number' && !words.includes('count')) {
+    sets.unshift({ words: [...words, 'count'], reason: 'codelf numeric rule', weight: 1 });
+  }
+
+  return sets;
+}
+
+function makeWordSets(words: string[], variableType: VariableType): WordSet[] {
+  if (variableType === 'boolean') return makeBooleanWordSets(words);
+  if (variableType === 'array') return makeArrayWordSets(words);
+  if (variableType === 'function') return makeFunctionWordSets(words);
+  return makeObjectWordSets(words, variableType);
+}
+
+function isValidCandidateName(name: string): boolean {
+  return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(name) || /^[A-Z][A-Z0-9_]*$/.test(name) || /^[a-z][a-z0-9_]*$/.test(name);
 }
 
 export class LocalNameGenerator implements NameGenerator {
   async generate(request: GenerateNameRequest): Promise<GenerateNameResult> {
-    const typeInferenceSource = request.translatedDescription
-      ? `${request.description} ${request.translatedDescription}`
-      : request.description;
-    const variableType = inferVariableType(typeInferenceSource, request.variableType);
     const translatedWords = extractTranslatedWords(request.translatedDescription);
-    const translatedGroups = translateDescription(request.description);
-    const primaryWords = translatedWords.length > 0
-      ? translatedWords
-      : translatedGroups.length > 0
-      ? pickPrimaryWords(translatedGroups)
-      : sanitizeEnglishFallback(request.description);
-    const reason = translatedWords.length > 0 ? 'deeplx translation' : 'local dictionary match';
-
-    const wordSets: Array<{ words: string[]; reason: string }> = [{ words: primaryWords, reason }];
-    if (variableType === 'boolean') {
-      wordSets.unshift(...makeBooleanAlternatives(primaryWords, request.description).map((words) => ({ words, reason })));
-    }
-    if (variableType === 'array' && !primaryWords.includes('list') && !primaryWords.includes('items')) {
-      wordSets.unshift({ words: [...primaryWords, 'list'], reason });
-    }
-    if (translatedWords.length > 0 && translatedGroups.length > 0) {
-      wordSets.push({ words: pickPrimaryWords(translatedGroups), reason: 'local dictionary match' });
+    if (translatedWords.length === 0) {
+      return {
+        candidates: [],
+        ...(request.translatedDescription ? { translatedDescription: request.translatedDescription } : {}),
+        translationProvider: 'none'
+      };
     }
 
+    const typeInferenceSource = `${request.description} ${request.translatedDescription ?? ''}`;
+    const variableType = inferVariableType(typeInferenceSource, request.variableType);
+    const wordSets = makeWordSets(translatedWords, variableType);
     const seen = new Set<string>();
+
     const candidates: NameCandidate[] = wordSets
-      .map(({ words, reason: candidateReason }) => ({
+      .map(({ words, reason, weight }) => ({
         name: applyCaseStyle(words, request.caseStyle, variableType),
-        reason: variableType === 'boolean' && candidateReason !== 'deeplx translation'
-          ? 'boolean intent detected'
-          : candidateReason
+        reason,
+        weight
       }))
       .filter(({ name }) => {
-        if (!name || seen.has(name)) return false;
-        seen.add(name);
+        if (!name || !isValidCandidateName(name) || name.length > 64 || seen.has(name.toLowerCase())) return false;
+        seen.add(name.toLowerCase());
         return true;
       })
-      .map(({ name, reason: candidateReason }, index) => ({
+      .map(({ name, reason, weight }, index) => ({
         name,
-        score: Math.max(0.95 - index * 0.08, 0.55),
-        reason: candidateReason
+        score: Math.max(weight - index * 0.04, 0.55),
+        reason
       }));
 
     return {
       candidates,
       ...(request.translatedDescription ? { translatedDescription: request.translatedDescription } : {}),
-      translationProvider: translatedWords.length > 0 ? 'deeplx' : 'local'
+      translationProvider: 'deeplx'
     };
   }
 }

@@ -9,9 +9,12 @@ interface Props {
 }
 
 function reasonLabel(reason?: string): string {
-  if (reason === 'deeplx translation') return 'DeepLX 翻译';
-  if (reason === 'boolean intent detected') return '布尔语义';
-  if (reason === 'local dictionary match') return '本地词典';
+  if (reason === 'codelf boolean rule') return 'Codelf 布尔';
+  if (reason === 'codelf collection rule') return 'Codelf 集合';
+  if (reason === 'codelf function rule') return 'Codelf 函数';
+  if (reason === 'codelf numeric rule') return 'Codelf 数值';
+  if (reason === 'codelf compact phrase') return 'Codelf 简洁';
+  if (reason === 'codelf direct phrase') return 'Codelf 直译';
   return '候选命名';
 }
 

@@ -199,7 +199,7 @@ button {
 
 .rule-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   min-width: 0;
   padding: 4px;
   border-radius: 999px;
@@ -255,8 +255,8 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding: 0 8px;
-  font-size: 13px;
+  padding: 0 5px;
+  font-size: 12px;
   font-weight: 650;
 }
 

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import type { CaseStyle } from '@variable-island/shared';
 
-const rules: CaseStyle[] = ['camelCase', 'PascalCase', 'Hungarian'];
+const rules: CaseStyle[] = ['camelCase', 'PascalCase', 'snake_case', 'CONSTANT_CASE', 'Hungarian'];
 
 interface Props {
   value: CaseStyle;

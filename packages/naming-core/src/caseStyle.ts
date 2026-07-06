@@ -22,6 +22,14 @@ export function applyCaseStyle(words: string[], caseStyle: CaseStyle, variableTy
   const cleanWords = words.map(normalizeToken).filter(Boolean);
   if (cleanWords.length === 0) return '';
 
+  if (caseStyle === 'snake_case') {
+    return cleanWords.map((word) => word.toLowerCase()).join('_');
+  }
+
+  if (caseStyle === 'CONSTANT_CASE') {
+    return cleanWords.map((word) => word.toUpperCase()).join('_');
+  }
+
   if (caseStyle === 'PascalCase') {
     return cleanWords.map(capitalize).join('');
   }
