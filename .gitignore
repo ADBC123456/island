@@ -9,3 +9,9 @@ bin/
 obj/
 coverage/
 .worktrees/
+.env
+.env.*
+!.env.example
+*.local
+*.local.json
+resources/config.json

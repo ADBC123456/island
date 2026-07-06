@@ -3,11 +3,18 @@ import { loadConfig } from './storageService.js';
 const DEFAULT_DEEPLX_URL = 'http://127.0.0.1:1188/translate';
 const DEFAULT_TARGET_LANG = 'EN';
 const DEFAULT_SOURCE_LANG = 'auto';
-const DEFAULT_TIMEOUT_MS = 1800;
+const DEFAULT_TIMEOUT_MS = 8000;
+const MIN_TIMEOUT_MS = 8000;
+const MAX_TRANSLATION_ATTEMPTS = 2;
 
 interface DeepLxResponse {
   code?: number;
   data?: unknown;
+  result?: unknown;
+  text?: unknown;
+  translatedText?: unknown;
+  translation?: unknown;
+  translations?: unknown;
   message?: string;
 }
 
@@ -38,7 +45,7 @@ function parseTimeout(value: string | undefined): number {
   if (!value) return DEFAULT_TIMEOUT_MS;
   const timeoutMs = Number.parseInt(value, 10);
   if (!Number.isFinite(timeoutMs) || timeoutMs < 300) return DEFAULT_TIMEOUT_MS;
-  return timeoutMs;
+  return Math.max(timeoutMs, MIN_TIMEOUT_MS);
 }
 
 function pickString(value: string | undefined, fallback: string): string {
@@ -104,12 +111,46 @@ function shouldTranslateDescription(description: string): boolean {
   return /[^\x00-\x7F]/.test(description);
 }
 
+function pickTranslatedText(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed || undefined;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const text = pickTranslatedText(item);
+      if (text) return text;
+    }
+    return undefined;
+  }
+
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    for (const key of ['text', 'data', 'translation', 'translatedText', 'target', 'value']) {
+      const text = pickTranslatedText(record[key]);
+      if (text) return text;
+    }
+  }
+
+  return undefined;
+}
+
+function readTranslatedText(payload: DeepLxResponse): string | undefined {
+  return pickTranslatedText(payload.data)
+    ?? pickTranslatedText(payload.text)
+    ?? pickTranslatedText(payload.translatedText)
+    ?? pickTranslatedText(payload.translation)
+    ?? pickTranslatedText(payload.result)
+    ?? pickTranslatedText(payload.translations);
+}
+
 export async function translateDescriptionWithDeepLX(description: string): Promise<string | undefined> {
   const text = description.trim();
   const config = readDeepLxConfig();
   if (!text || !config.enabled || !shouldTranslateDescription(text)) return undefined;
 
-  const cacheKey = `${config.endpoint}|${config.sourceLang}|${config.targetLang}|${text}`;
+  const cacheKey = `${config.endpoint}|${config.token ?? ''}|${config.sourceLang}|${config.targetLang}|${text}`;
   const cached = translationCache.get(cacheKey);
   if (cached) return cached;
 
@@ -125,6 +166,16 @@ export async function translateDescriptionWithDeepLX(description: string): Promi
 }
 
 async function requestDeepLXTranslation(text: string, config: DeepLxConfig): Promise<string | undefined> {
+  for (let attempt = 1; attempt <= MAX_TRANSLATION_ATTEMPTS; attempt += 1) {
+    const result = await requestDeepLXTranslationAttempt(text, config);
+    if (result || attempt === MAX_TRANSLATION_ATTEMPTS) return result;
+    console.warn(`[deeplx] translation attempt ${attempt} failed; retrying`);
+  }
+
+  return undefined;
+}
+
+async function requestDeepLXTranslationAttempt(text: string, config: DeepLxConfig): Promise<string | undefined> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
   const headers: Record<string, string> = {
@@ -152,13 +203,14 @@ async function requestDeepLXTranslation(text: string, config: DeepLxConfig): Pro
     }
 
     const payload = (await response.json()) as DeepLxResponse;
-    if (typeof payload.data !== 'string' || payload.data.trim().length === 0) {
+    const translatedText = readTranslatedText(payload);
+    if (!translatedText) {
       console.warn(`[deeplx] translation response did not contain data: ${payload.message ?? 'empty data'}`);
       return undefined;
     }
 
     console.log(`[deeplx] translation ok (${config.sourceLang}->${config.targetLang})`);
-    return payload.data.trim();
+    return translatedText;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.warn(`[deeplx] translation unavailable: ${message}`);

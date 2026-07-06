@@ -16,7 +16,7 @@ export const defaultConfig: AppConfig = {
   deeplxToken: '',
   deeplxSourceLang: 'auto',
   deeplxTargetLang: 'EN',
-  deeplxTimeoutMs: 1800
+  deeplxTimeoutMs: 8000
 };
 
 export function getDataDir(): string {
