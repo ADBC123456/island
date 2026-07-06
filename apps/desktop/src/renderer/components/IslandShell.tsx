@@ -40,7 +40,7 @@ export function IslandShell({ state, setState }: Props) {
   // one continuous material; retract is just a touch firmer.
   const shellTransition = isRetracting ? shellRetractTransition : shellExpandTransition;
   const shellAnimation = isHidden
-    ? { ...size, opacity: 0, scale: 0.9 }
+    ? { ...size, opacity: 0, scale: 1 }
     : { ...size, opacity: 1, scale: 1 };
   // When retracting, content exits instantly so the shell collapses cleanly
   // without the old layout lingering inside the shrinking capsule.
@@ -80,7 +80,7 @@ export function IslandShell({ state, setState }: Props) {
       <motion.section
         ref={shellRef}
         className={`island-shell island-shell-${state.status}`}
-        initial={{ opacity: 0, scale: 0.9, ...size }}
+        initial={{ opacity: 0, scale: 1, ...size }}
         animate={shellAnimation}
         transition={shellTransition}
         style={{ transformOrigin: '50% 50%' }}
@@ -97,8 +97,8 @@ export function IslandShell({ state, setState }: Props) {
             <motion.div
               key="hidden"
               className="island-collapse-core"
-              initial={{ opacity: 0.34, scale: 1 }}
-              animate={{ opacity: 0, scale: 0.88 }}
+              initial={{ opacity: 0.34 }}
+              animate={{ opacity: 0 }}
               exit={{ opacity: 0, transition: quickFadeTransition }}
               transition={collapseTransition}
             />

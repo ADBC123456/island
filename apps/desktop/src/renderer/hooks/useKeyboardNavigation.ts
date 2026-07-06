@@ -8,7 +8,9 @@ export function useKeyboardNavigation(
   state: IslandState,
   setState: React.Dispatch<React.SetStateAction<IslandState>>,
   onCopy: () => void,
-  onInsert: () => void
+  onInsert: () => void,
+  onHide: () => void,
+  canHandleKeyboard: () => boolean
 ) {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -16,8 +18,10 @@ export function useKeyboardNavigation(
 
       if (event.key === 'Escape') {
         event.preventDefault();
-        void window.variableIsland.hideIsland();
+        onHide();
+        return;
       }
+      if (!canHandleKeyboard()) return;
       if (state.status === 'success' || state.status === 'error') return;
 
       if (event.key === 'ArrowDown') {
@@ -47,5 +51,5 @@ export function useKeyboardNavigation(
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [state.caseStyle, state.status, setState, onCopy, onInsert]);
+  }, [state.caseStyle, state.status, setState, onCopy, onInsert, onHide, canHandleKeyboard]);
 }

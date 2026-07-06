@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 interface Props {
   value: string;
@@ -7,13 +7,38 @@ interface Props {
 
 export function IslandInput({ value, onChange }: Props) {
   const ref = useRef<HTMLInputElement>(null);
-  useEffect(() => ref.current?.focus(), []);
-  useEffect(() => window.variableIsland.onShow(() => {
-    window.requestAnimationFrame(() => {
-      ref.current?.focus();
-      ref.current?.select();
+  const pendingFocusFrameRef = useRef<number | null>(null);
+
+  const cancelPendingFocusFrame = useCallback(() => {
+    if (pendingFocusFrameRef.current === null) return;
+    window.cancelAnimationFrame(pendingFocusFrameRef.current);
+    pendingFocusFrameRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    ref.current?.focus({ preventScroll: true });
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = window.variableIsland.onShow(() => {
+      cancelPendingFocusFrame();
+      const valueBeforeFrame = ref.current?.value ?? '';
+      pendingFocusFrameRef.current = window.requestAnimationFrame(() => {
+        pendingFocusFrameRef.current = null;
+        const input = ref.current;
+        if (!input) return;
+        input.focus({ preventScroll: true });
+        if (input.value === valueBeforeFrame) {
+          input.select();
+        }
+      });
     });
-  }), []);
+
+    return () => {
+      cancelPendingFocusFrame();
+      unsubscribe();
+    };
+  }, [cancelPendingFocusFrame]);
 
   return (
     <input

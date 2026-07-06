@@ -27,12 +27,10 @@ function bootstrapApp(): void {
     registerShortcuts(manager);
     startMouseEdgeWatcher(manager);
 
-    if (process.env.VITE_DEV_SERVER_URL) {
-      setTimeout(() => {
-        console.log('[dev] showing island once for startup diagnostics');
-        manager.showIsland();
-      }, 1000);
-    }
+    setTimeout(() => {
+      console.log('[window] showing island once after startup');
+      manager.showIsland();
+    }, 1000);
 
     app.on('activate', () => {
       manager.showIsland();

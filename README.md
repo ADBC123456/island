@@ -46,11 +46,43 @@ pnpm dev
 pnpm build
 ```
 
-如果需要使用“插入文本”能力，还需要构建 Windows 原生辅助程序：
+这个命令只构建 TypeScript 包和前端静态资源，不会生成可分发的 Windows 软件包。
+
+## Windows 打包
+
+推荐先生成免安装 zip 包：
 
 ```bash
-dotnet build apps/native-helper/NativeHelper.csproj -c Release
+pnpm zip:win
 ```
+
+该命令会自动完成三件事：
+
+- 构建 `packages/shared` 和 `packages/naming-core`
+- 构建 Windows 原生辅助程序
+- 构建 Electron 应用并生成 zip 包
+
+构建完成后可以直接运行：
+
+```text
+apps/desktop/release/win-unpacked/Variable Island.exe
+```
+
+可分发压缩包位于：
+
+```text
+apps/desktop/release/Variable Island-0.1.0-win.zip
+```
+
+如果需要 NSIS 安装包，可以运行：
+
+```bash
+pnpm dist:win
+```
+
+`dist:win` 可能需要从网络下载 NSIS 相关依赖；如果下载失败，优先使用 `pnpm zip:win` 生成的免安装版本。
+
+开发模式和打包模式不同：`pnpm dev` 通过 Vite dev server 加载页面，打包版通过本地 `file://` 静态文件加载页面。因此打包前必须使用 `pnpm zip:win` 或 `pnpm dist:win` 重新生成 release 目录，不要运行旧的 release 产物。
 
 ## 测试与类型检查
 

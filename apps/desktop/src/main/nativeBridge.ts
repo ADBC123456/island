@@ -1,11 +1,16 @@
 import { execFile } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { app } from 'electron';
 import type { NativeCommandResult } from '@variable-island/shared';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function helperPath(): string {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'native-helper', 'NativeHelper.exe');
+  }
+
   return path.resolve(__dirname, '../../../native-helper/bin/Release/net8.0-windows/NativeHelper.exe');
 }
 

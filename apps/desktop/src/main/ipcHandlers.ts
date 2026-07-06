@@ -10,8 +10,8 @@ export function registerIpcHandlers(windowManager: WindowManager): void {
   const generator = new LocalNameGenerator();
 
   ipcMain.handle('naming:generate', async (_event, request: GenerateNameRequest) => {
-    const translatedDescription = request.translatedDescription
-      ?? await translateDescriptionWithDeepLX(request.description);
+    const providedTranslation = request.translatedDescription?.trim();
+    const translatedDescription = providedTranslation || await translateDescriptionWithDeepLX(request.description);
     return generator.generate(
       translatedDescription
         ? { ...request, translatedDescription }

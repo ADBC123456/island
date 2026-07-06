@@ -2,6 +2,8 @@ node_modules/
 dist/
 out/
 .vite/
+release/
+apps/desktop/release/
 *.log
 .DS_Store
 .vs/
@@ -9,6 +11,7 @@ bin/
 obj/
 coverage/
 .worktrees/
+.claude/
 .agents/
 .codex/
 CLAUDE.md

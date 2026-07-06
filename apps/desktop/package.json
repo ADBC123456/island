@@ -5,17 +5,50 @@
   "type": "module",
   "main": "dist/main/main.js",
   "scripts": {
-    "dev": "pnpm --filter @variable-island/shared build && pnpm --filter @variable-island/naming-core build && pnpm build:main && concurrently -k \"vite --config vite.renderer.config.ts --host 127.0.0.1\" \"tsc -p tsconfig.node.json --watch --preserveWatchOutput\" \"wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron dist/main/main.js\"",
+    "dev": "pnpm --filter @variable-island/shared build && pnpm --filter @variable-island/naming-core build && pnpm build:main && concurrently -k \"vite --config vite.renderer.config.ts --host 127.0.0.1\" \"tsc -p tsconfig.node.json --watch --preserveWatchOutput\" \"wait-on tcp:5174 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5174 electron dist/main/main.js\"",
+    "build:deps": "pnpm --filter @variable-island/shared build && pnpm --filter @variable-island/naming-core build",
+    "build:native-helper": "dotnet build ../native-helper/NativeHelper.csproj -c Release",
+    "clean:dist": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "build:main": "tsc -p tsconfig.node.json",
-    "build": "tsc -p tsconfig.node.json && vite build --config vite.renderer.config.ts",
+    "build": "pnpm clean:dist && tsc -p tsconfig.node.json && vite build --config vite.renderer.config.ts",
+    "pack:win": "pnpm build:deps && pnpm build:native-helper && pnpm build && electron-builder --win --dir",
+    "dist": "pnpm build:deps && pnpm build:native-helper && pnpm build && electron-builder --win nsis",
+    "dist:win": "pnpm build:deps && pnpm build:native-helper && pnpm build && electron-builder --win nsis",
+    "zip:win": "pnpm build:deps && pnpm build:native-helper && pnpm build && electron-builder --win zip",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "test": "vitest run --passWithNoTests"
+  },
+  "build": {
+    "appId": "com.variableisland.app",
+    "productName": "Variable Island",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../native-helper/bin/Release/net8.0-windows/NativeHelper.exe",
+        "to": "native-helper/NativeHelper.exe"
+      }
+    ],
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   },
   "dependencies": {
     "@variable-island/naming-core": "workspace:*",
     "@variable-island/shared": "workspace:*",
     "@vitejs/plugin-react": "^4.3.1",
-    "electron": "^31.2.1",
     "framer-motion": "^11.3.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
@@ -26,6 +59,9 @@
     "@types/react-dom": "^18.3.0",
     "concurrently": "^8.2.2",
     "cross-env": "^10.1.0",
+    "electron": "^31.2.1",
+    "electron-builder": "^24.13.3",
+    "happy-dom": "^20.10.6",
     "tsx": "^4.16.2",
     "vite": "^5.3.4",
     "vitest": "^2.0.5",

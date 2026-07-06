@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "pnpm --filter @variable-island/desktop dev",
     "build": "pnpm -r build",
+    "pack:win": "pnpm --filter @variable-island/desktop pack:win",
+    "zip:win": "pnpm --filter @variable-island/desktop zip:win",
+    "dist:win": "pnpm --filter @variable-island/desktop dist:win",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck"
   },

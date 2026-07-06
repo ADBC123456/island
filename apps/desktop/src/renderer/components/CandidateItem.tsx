@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import type { NameCandidate } from '@variable-island/shared';
+import { candidateTransition } from '../motionTokens';
 
 interface Props {
   candidate: NameCandidate;
@@ -18,19 +19,16 @@ function reasonLabel(reason?: string): string {
   return '候选命名';
 }
 
-const itemSpring = { type: 'spring', stiffness: 480, damping: 32, mass: 0.7 } as const;
-
 export function CandidateItem({ candidate, selected, index, onSelect }: Props) {
   return (
     <motion.button
       className={selected ? 'candidate selected' : 'candidate'}
       type="button"
       aria-pressed={selected}
-      layout="position"
       initial={{ opacity: 0, y: 12, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ ...itemSpring, delay: Math.min(index * 0.03, 0.12) }}
+      whileTap={{ scale: 0.975 }}
+      transition={candidateTransition}
       onClick={onSelect}
     >
       <span className="candidate-index">{String(index + 1).padStart(2, '0')}</span>
