@@ -9,7 +9,12 @@ interface Props {
 
 export function VariableTypeSelector({ value, onChange }: Props) {
   return (
-    <select className="type-select" value={value} onChange={(event) => onChange(event.target.value as VariableType)}>
+    <select
+      className="type-select"
+      value={value}
+      aria-label="变量类型"
+      onChange={(event) => onChange(event.target.value as VariableType)}
+    >
       {types.map((type) => (
         <option key={type} value={type}>{type}</option>
       ))}

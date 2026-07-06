@@ -1,7 +1,8 @@
 import { ipcMain } from 'electron';
 import { LocalNameGenerator } from '@variable-island/naming-core';
-import type { GenerateNameRequest, InsertTextRequest } from '@variable-island/shared';
+import type { GenerateNameRequest, InsertTextRequest, IslandStatus } from '@variable-island/shared';
 import { copyText } from './clipboardService.js';
+import { translateDescriptionWithDeepLX } from './deeplxService.js';
 import { insertText } from './nativeBridge.js';
 import type { WindowManager } from './windowManager.js';
 
@@ -9,7 +10,12 @@ export function registerIpcHandlers(windowManager: WindowManager): void {
   const generator = new LocalNameGenerator();
 
   ipcMain.handle('naming:generate', async (_event, request: GenerateNameRequest) => {
-    return generator.generate(request);
+    const translatedDescription = await translateDescriptionWithDeepLX(request.description);
+    return generator.generate(
+      translatedDescription
+        ? { ...request, translatedDescription }
+        : request
+    );
   });
 
   ipcMain.handle('clipboard:copy', async (_event, text: string) => {
@@ -25,5 +31,9 @@ export function registerIpcHandlers(windowManager: WindowManager): void {
 
   ipcMain.handle('window:hide-island', async () => {
     windowManager.hideIsland();
+  });
+
+  ipcMain.handle('window:set-island-status', async (_event, status: IslandStatus) => {
+    windowManager.setIslandStatus(status);
   });
 }

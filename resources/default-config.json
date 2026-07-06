@@ -5,5 +5,11 @@
   "insertMode": "copy",
   "restoreClipboardAfterInsert": false,
   "theme": "dark-glass",
-  "animationLevel": "full"
+  "animationLevel": "full",
+  "translationProvider": "deeplx",
+  "deeplxUrl": "http://127.0.0.1:1188/translate",
+  "deeplxToken": "",
+  "deeplxSourceLang": "auto",
+  "deeplxTargetLang": "EN-US",
+  "deeplxTimeoutMs": 1800
 }

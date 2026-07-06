@@ -8,6 +8,12 @@ interface Props {
 export function IslandInput({ value, onChange }: Props) {
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => ref.current?.focus(), []);
+  useEffect(() => window.variableIsland.onShow(() => {
+    window.requestAnimationFrame(() => {
+      ref.current?.focus();
+      ref.current?.select();
+    });
+  }), []);
 
   return (
     <input
@@ -16,6 +22,7 @@ export function IslandInput({ value, onChange }: Props) {
       value={value}
       onChange={(event) => onChange(event.target.value)}
       placeholder="描述变量用途..."
+      aria-label="变量用途描述"
       spellCheck={false}
     />
   );

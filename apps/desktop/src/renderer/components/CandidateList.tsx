@@ -9,7 +9,12 @@ interface Props {
 
 export function CandidateList({ candidates, selectedIndex, onSelect }: Props) {
   if (candidates.length === 0) {
-    return <div className="empty-candidates">输入描述后生成变量名</div>;
+    return (
+      <div className="empty-candidates">
+        <span className="empty-title">等待描述</span>
+        <span className="empty-subtitle">输入后会在这里生成候选变量名</span>
+      </div>
+    );
   }
 
   return (

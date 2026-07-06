@@ -10,7 +10,13 @@ export const defaultConfig: AppConfig = {
   insertMode: 'copy',
   restoreClipboardAfterInsert: false,
   theme: 'dark-glass',
-  animationLevel: 'full'
+  animationLevel: 'full',
+  translationProvider: 'deeplx',
+  deeplxUrl: 'http://127.0.0.1:1188/translate',
+  deeplxToken: '',
+  deeplxSourceLang: 'auto',
+  deeplxTargetLang: 'EN-US',
+  deeplxTimeoutMs: 1800
 };
 
 export function getDataDir(): string {
@@ -25,5 +31,10 @@ export function loadConfig(): AppConfig {
     fs.writeFileSync(file, JSON.stringify(defaultConfig, null, 2), 'utf-8');
     return defaultConfig;
   }
-  return { ...defaultConfig, ...JSON.parse(fs.readFileSync(file, 'utf-8')) };
+  const userConfig = JSON.parse(fs.readFileSync(file, 'utf-8')) as Partial<AppConfig>;
+  const config = { ...defaultConfig, ...userConfig };
+  if (Object.keys(defaultConfig).some((key) => !(key in userConfig))) {
+    fs.writeFileSync(file, JSON.stringify(config, null, 2), 'utf-8');
+  }
+  return config;
 }

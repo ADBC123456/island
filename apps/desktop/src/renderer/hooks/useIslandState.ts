@@ -11,8 +11,8 @@ export interface IslandState {
   message: string;
 }
 
-export function useIslandState() {
-  const [state, setState] = useState<IslandState>({
+export function createInitialIslandState(): IslandState {
+  return {
     status: 'compact',
     description: '',
     caseStyle: 'camelCase',
@@ -20,7 +20,11 @@ export function useIslandState() {
     candidates: [],
     selectedIndex: 0,
     message: ''
-  });
+  };
+}
+
+export function useIslandState() {
+  const [state, setState] = useState<IslandState>(createInitialIslandState);
 
   const selectedCandidate = useMemo(
     () => state.candidates[state.selectedIndex],

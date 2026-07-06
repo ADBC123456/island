@@ -16,6 +16,7 @@ export interface GenerateNameRequest {
   caseStyle: CaseStyle;
   variableType: VariableType;
   language?: string;
+  translatedDescription?: string;
 }
 
 export interface NameCandidate {
@@ -26,6 +27,8 @@ export interface NameCandidate {
 
 export interface GenerateNameResult {
   candidates: NameCandidate[];
+  translatedDescription?: string;
+  translationProvider?: 'deeplx' | 'local';
 }
 
 export interface InsertTextRequest {
@@ -48,4 +51,10 @@ export interface AppConfig {
   restoreClipboardAfterInsert: boolean;
   theme: 'dark-glass';
   animationLevel: 'full' | 'reduced';
+  translationProvider: 'deeplx' | 'local';
+  deeplxUrl: string;
+  deeplxToken: string;
+  deeplxSourceLang: string;
+  deeplxTargetLang: string;
+  deeplxTimeoutMs: number;
 }

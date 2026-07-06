@@ -12,10 +12,14 @@ export function useKeyboardNavigation(
 ) {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (event.isComposing) return;
+
       if (event.key === 'Escape') {
         event.preventDefault();
         void window.variableIsland.hideIsland();
       }
+      if (state.status === 'success' || state.status === 'error') return;
+
       if (event.key === 'ArrowDown') {
         event.preventDefault();
         setState((current) => ({
@@ -43,5 +47,5 @@ export function useKeyboardNavigation(
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [state.caseStyle, setState, onCopy, onInsert]);
+  }, [state.caseStyle, state.status, setState, onCopy, onInsert]);
 }
