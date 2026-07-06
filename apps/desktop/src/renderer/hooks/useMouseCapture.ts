@@ -8,9 +8,11 @@ import { useEffect, useRef } from 'react';
  *
  * `forward: true` (set in the main process) keeps mousemove events reaching the
  * renderer even while pass-through, so this detection works in both states.
+ *
+ * Pass in the shared shell ref so multiple hooks (rim highlight, etc.) can
+ * observe the same element.
  */
-export function useMouseCapture(enabled: boolean): React.RefObject<HTMLElement> {
-  const shellRef = useRef<HTMLElement>(null);
+export function useMouseCapture(enabled: boolean, shellRef: React.RefObject<HTMLElement>): void {
   const capturingRef = useRef(false);
 
   useEffect(() => {
@@ -42,7 +44,5 @@ export function useMouseCapture(enabled: boolean): React.RefObject<HTMLElement> 
       window.removeEventListener('mouseenter', onMove);
       setCapture(false);
     };
-  }, [enabled]);
-
-  return shellRef;
+  }, [enabled, shellRef]);
 }

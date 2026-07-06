@@ -114,6 +114,83 @@ button {
   mix-blend-mode: overlay;
 }
 
+/* ----------------------------------------------------------------
+   Liquid Glass rim — two stacked gradient rings (screen + overlay)
+   after rdev/liquid-glass-react. The mask-composite trick turns a
+   filled gradient into a 1.5px bright rim that catches light like
+   real glass edges. Driven by --rim-angle so the highlight follows
+   the pointer (set inline by useLiquidGlassRim).
+   ---------------------------------------------------------------- */
+.island-shell,
+.island-shell-success,
+.island-shell-error {
+}
+
+.island-rim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  padding: 1.5px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  background: linear-gradient(
+    var(--rim-angle, 135deg),
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.18) 33%,
+    rgba(255, 255, 255, 0.5) 66%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.5) inset,
+    0 1px 3px rgba(255, 255, 255, 0.25) inset;
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+
+.island-rim-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  padding: 1.5px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  background: linear-gradient(
+    var(--rim-angle, 135deg),
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.35) 33%,
+    rgba(255, 255, 255, 0.7) 66%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  mix-blend-mode: overlay;
+}
+
+/* hover/active radial highlight — like the glass catching a light source */
+.island-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 55%);
+  mix-blend-mode: overlay;
+  transition: opacity 180ms ease;
+}
+
+.island-shell:hover .island-glow {
+  opacity: 0.5;
+}
+
+.island-shell:active .island-glow {
+  opacity: 0.8;
+}
+
 /* success / error glow on the shell rim */
 .island-shell-success {
   box-shadow:
@@ -133,7 +210,7 @@ button {
 
 .island-content {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   padding: 12px 16px 14px;
 }
 
@@ -584,6 +661,11 @@ button {
   .candidate-list::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.18);
   }
+
+  /* rim brighter on dark glass so the edge reads */
+  .island-rim {
+    opacity: 0.7;
+  }
 }
 
 /* ================================================================
@@ -611,6 +693,12 @@ button {
   .rule-tabs,
   .type-select {
     background: rgba(248, 248, 250, 0.96);
+  }
+
+  /* no glassy rim under reduced transparency — the edge is already solid */
+  .island-rim,
+  .island-rim-overlay {
+    display: none;
   }
 }
 
@@ -666,6 +754,18 @@ button {
 
   .island-input {
     text-shadow: none;
+  }
+
+  /* stronger, higher-contrast rim */
+  .island-rim,
+  .island-rim-overlay {
+    background: linear-gradient(
+      var(--rim-angle, 135deg),
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.4) 33%,
+      rgba(255, 255, 255, 0.85) 66%,
+      rgba(255, 255, 255, 0) 100%
+    );
   }
 }
 

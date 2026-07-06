@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { IslandInput } from './IslandInput';
 import { NamingRuleTabs } from './NamingRuleTabs';
@@ -7,6 +8,7 @@ import { StatusToast } from './StatusToast';
 import { ShortcutHints } from './ShortcutHints';
 import { islandDimensions } from '../islandMetrics';
 import { useMouseCapture } from '../hooks/useMouseCapture';
+import { useLiquidGlassRim } from '../hooks/useLiquidGlassRim';
 import type { IslandState } from '../hooks/useIslandState';
 
 interface Props {
@@ -26,8 +28,12 @@ export function IslandShell({ state, setState }: Props) {
   const isFeedback = state.status === 'success' || state.status === 'error';
   const hasCandidates = state.candidates.length > 0;
   const size = islandDimensions(state.status, state.candidates.length);
-  // Only capture clicks when the island is actually visible.
-  const shellRef = useMouseCapture(state.status !== 'hidden');
+  const visible = state.status !== 'hidden';
+
+  // One shared shell ref drives both click-capture and the rim highlight.
+  const shellRef = useRef<HTMLDivElement>(null);
+  useMouseCapture(visible, shellRef);
+  useLiquidGlassRim(visible, shellRef);
 
   return (
     <main className="island-stage">
@@ -39,6 +45,11 @@ export function IslandShell({ state, setState }: Props) {
         transition={morphSpring}
         aria-live="polite"
       >
+        {/* Liquid Glass rim — two gradient rings (screen + overlay) */}
+        <span className="island-rim" aria-hidden="true" />
+        <span className="island-rim-overlay" aria-hidden="true" />
+        {/* hover/active radial highlight */}
+        <span className="island-glow" aria-hidden="true" />
         <AnimatePresence mode="wait" initial={false}>
           {isFeedback ? (
             <motion.div
