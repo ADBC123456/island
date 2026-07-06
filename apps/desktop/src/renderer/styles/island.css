@@ -36,42 +36,59 @@ button {
   pointer-events: none;
 }
 
-/* ----------------------------------------------------------------
-   Apple HIG light material ("thick" for legibility), white theme.
-   Label hierarchy follows iOS light mode:
-   label / secondaryLabel rgba(60,60,67,0.6) / tertiaryLabel rgba(60,60,67,0.33)
-   ---------------------------------------------------------------- */
+/* ================================================================
+   Liquid Glass — Apple HIG materials (light + dark adaptive)
+
+   Label hierarchy (iOS):
+     label           rgba(0,0,0,0.88) / dark rgba(255,255,255,0.96)
+     secondaryLabel rgba(60,60,67,0.6) / dark rgba(235,235,245,0.6)
+     tertiaryLabel  rgba(60,60,67,0.3) / dark rgba(235,235,245,0.3)
+
+   Variant mapping:
+     .island-shell       Clear   — small floating control over any content
+     .rule-tabs / select Regular — control layer carrying text
+     .candidate          Regular — candidate rows carrying text + badge
+   ================================================================ */
 
 .island-shell {
+  /* ink (light) */
   --ink: rgba(0, 0, 0, 0.88);
   --ink-secondary: rgba(60, 60, 67, 0.6);
   --ink-tertiary: rgba(60, 60, 67, 0.3);
+  /* system accents */
   --accent: #007aff;
   --success: #34c759;
   --danger: #ff3b30;
-  --fill: rgba(120, 120, 128, 0.08);
-  --fill-border: rgba(0, 0, 0, 0.05);
+  /* glass tint (Clear, light) */
+  --glass-tint: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.18) 52%, rgba(255, 255, 255, 0.06));
+  --glass-base: rgba(248, 248, 250, 0.5);
+  --glass-blur: blur(22px) saturate(180%);
+  --glass-border: rgba(255, 255, 255, 0.65);
+  --glass-hairline: rgba(0, 0, 0, 0.05);
+  --glass-shadow: 0 14px 34px rgba(0, 0, 0, 0.16), 0 3px 10px rgba(0, 0, 0, 0.1);
+  /* regular control surface */
+  --fill: rgba(120, 120, 128, 0.1);
+  --fill-border: rgba(0, 0, 0, 0.06);
+
   position: relative;
   pointer-events: auto;
   overflow: hidden;
   isolation: isolate;
   transform: translateZ(0);
   color: var(--ink);
-  /* thick light material: high opacity keeps text legible over any desktop */
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.22) 46%, rgba(255, 255, 255, 0.05) 78%),
-    rgba(248, 248, 250, 0.82);
-  backdrop-filter: blur(28px) saturate(170%);
-  -webkit-backdrop-filter: blur(28px) saturate(170%);
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: var(--glass-tint), var(--glass-base);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.16),
-    0 3px 12px rgba(0, 0, 0, 0.1),
-    0 0 0 0.5px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    var(--glass-shadow),
+    0 0 0 0.5px var(--glass-hairline),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.25);
+  transition: box-shadow 180ms ease;
 }
 
-/* soft specular highlight, top edge */
+/* specular highlight — top-left light source, the most important edge light */
 .island-shell::before {
   content: "";
   position: absolute;
@@ -80,11 +97,11 @@ button {
   pointer-events: none;
   border-radius: inherit;
   background:
-    radial-gradient(130% 90% at 20% -14%, rgba(255, 255, 255, 0.85), transparent 44%),
-    radial-gradient(90% 70% at 85% 116%, rgba(0, 122, 255, 0.05), transparent 50%);
+    radial-gradient(130% 85% at 18% -16%, rgba(255, 255, 255, 0.7), transparent 46%),
+    radial-gradient(90% 70% at 86% 118%, rgba(0, 122, 255, 0.04), transparent 52%);
 }
 
-/* fine grain so the glass does not look flat */
+/* fine grain so the glass does not read as a flat CSS plane */
 .island-shell::after {
   content: "";
   position: absolute;
@@ -93,24 +110,25 @@ button {
   pointer-events: none;
   border-radius: inherit;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.028;
+  opacity: 0.03;
   mix-blend-mode: overlay;
 }
 
+/* success / error glow on the shell rim */
 .island-shell-success {
   box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.16),
-    0 0 0 1px rgba(52, 199, 89, 0.32),
+    var(--glass-shadow),
+    0 0 0 1px rgba(52, 199, 89, 0.3),
     0 0 26px rgba(52, 199, 89, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .island-shell-error {
   box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.16),
-    0 0 0 1px rgba(255, 59, 48, 0.32),
+    var(--glass-shadow),
+    0 0 0 1px rgba(255, 59, 48, 0.3),
     0 0 26px rgba(255, 59, 48, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .island-content {
@@ -164,6 +182,8 @@ button {
   font-weight: 600;
   line-height: 20px;
   text-align: left;
+  /* vibrancy-style legibility lift over any backdrop */
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .island-shell-compact .island-input {
@@ -208,15 +228,15 @@ button {
   margin-bottom: 12px;
 }
 
-/* iOS segmented control style */
+/* iOS segmented control — Regular variant, no glass-on-glass */
 .rule-tabs {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   min-width: 0;
   padding: 3px;
   border-radius: 999px;
-  background: rgba(120, 120, 128, 0.14);
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  background: var(--fill);
+  border: 1px solid var(--fill-border);
   box-shadow: inset 0 0.5px 2px rgba(0, 0, 0, 0.06);
 }
 
@@ -243,6 +263,7 @@ button {
   outline-offset: 2px;
 }
 
+/* sliding thumb — solid fill, not another glass layer */
 .rule-tab-active {
   position: absolute;
   inset: 0;
@@ -251,7 +272,8 @@ button {
   border: 0.5px solid rgba(0, 0, 0, 0.04);
   box-shadow:
     0 3px 8px rgba(0, 0, 0, 0.12),
-    0 1px 2px rgba(0, 0, 0, 0.08);
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .rule-tab-label {
@@ -272,7 +294,7 @@ button {
   border: 1px solid var(--fill-border);
   border-radius: 999px;
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.7);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
   padding: 0 14px;
   outline: none;
@@ -283,6 +305,7 @@ button {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M1 1l3 3 3-3' fill='none' stroke='rgba(60,60,67,0.6)' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 13px center;
+  transition: background 140ms ease, box-shadow 140ms ease;
 }
 
 .type-select option {
@@ -314,6 +337,7 @@ button {
   background: transparent;
 }
 
+/* candidate — Regular variant: slightly frosted, carries text + badge */
 .candidate {
   width: 100%;
   min-width: 0;
@@ -326,23 +350,29 @@ button {
   gap: 12px;
   padding: 0 12px;
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.5);
   cursor: pointer;
   text-align: left;
-  transition: background 120ms ease, border-color 120ms ease;
+  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
 }
 
 .candidate:hover {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.78);
   border-color: rgba(0, 0, 0, 0.08);
 }
 
 .candidate.selected {
   background: rgba(0, 122, 255, 0.1);
-  border-color: rgba(0, 122, 255, 0.45);
+  border-color: rgba(0, 122, 255, 0.42);
   box-shadow:
     0 3px 12px rgba(0, 122, 255, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.candidate:active {
+  box-shadow:
+    inset 0 2px 8px rgba(0, 122, 255, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .candidate-index {
@@ -405,6 +435,7 @@ button {
   font-variant-numeric: tabular-nums;
 }
 
+/* sole emphasis color — only the "primary" badge */
 .candidate-badge.primary {
   color: #8a5a00;
   background: rgba(255, 204, 0, 0.22);
@@ -463,6 +494,207 @@ button {
 .status-icon {
   display: block;
 }
+
+/* ================================================================
+   Dark appearance — glass dims, shadows deepen, highlights soften.
+   The island floats over arbitrary desktop content; in dark mode we
+   lean slightly more opaque to keep text legible over bright windows.
+   ================================================================ */
+
+@media (prefers-color-scheme: dark) {
+  .island-shell {
+    --ink: rgba(255, 255, 255, 0.96);
+    --ink-secondary: rgba(235, 235, 245, 0.6);
+    --ink-tertiary: rgba(235, 235, 245, 0.3);
+    --glass-tint: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03) 52%, rgba(255, 255, 255, 0));
+    --glass-base: rgba(22, 22, 28, 0.52);
+    --glass-blur: blur(26px) saturate(150%) brightness(0.96);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-hairline: rgba(0, 0, 0, 0.5);
+    --glass-shadow: 0 16px 38px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.34);
+    --fill: rgba(120, 120, 128, 0.24);
+    --fill-border: rgba(255, 255, 255, 0.08);
+  }
+
+  .island-shell {
+    box-shadow:
+      var(--glass-shadow),
+      0 0 0 0.5px var(--glass-hairline),
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .island-shell::before {
+    background:
+      radial-gradient(130% 85% at 18% -16%, rgba(255, 255, 255, 0.18), transparent 46%),
+      radial-gradient(90% 70% at 86% 118%, rgba(10, 132, 255, 0.08), transparent 52%);
+  }
+
+  .island-input {
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .rule-tab-active {
+    background: rgba(255, 255, 255, 0.16);
+    border: 0.5px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 3px 8px rgba(0, 0, 0, 0.34),
+      0 1px 2px rgba(0, 0, 0, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+
+  .type-select {
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  }
+
+  .candidate {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .candidate:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .candidate.selected {
+    background: rgba(10, 132, 255, 0.2);
+    border-color: rgba(10, 132, 255, 0.5);
+    box-shadow:
+      0 3px 12px rgba(0, 0, 0, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .island-count.active {
+    color: #8ec8ff;
+    border-color: rgba(10, 132, 255, 0.4);
+    background: rgba(10, 132, 255, 0.18);
+  }
+
+  .empty-candidates {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.07);
+  }
+
+  .candidate-list {
+    scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  }
+
+  .candidate-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+  }
+}
+
+/* ================================================================
+   Accessibility — reduce transparency: glass becomes more solid /
+   frosted so text is fully legible over any backdrop.
+   ================================================================ */
+
+@media (prefers-reduced-transparency: reduce) {
+  .island-shell {
+    --glass-tint: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.86));
+    --glass-base: rgba(248, 248, 250, 0.96);
+    --glass-blur: blur(8px) saturate(120%);
+    --glass-border: rgba(0, 0, 0, 0.08);
+  }
+
+  .island-shell::before {
+    background: none;
+  }
+
+  .island-shell::after {
+    display: none;
+  }
+
+  .candidate,
+  .rule-tabs,
+  .type-select {
+    background: rgba(248, 248, 250, 0.96);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) and (prefers-color-scheme: dark) {
+  .island-shell {
+    --glass-tint: linear-gradient(180deg, rgba(30, 30, 36, 0.98), rgba(22, 22, 28, 0.98));
+    --glass-base: rgba(22, 22, 28, 0.98);
+    --glass-blur: blur(8px) saturate(110%);
+    --glass-border: rgba(255, 255, 255, 0.14);
+  }
+
+  .candidate,
+  .rule-tabs,
+  .type-select {
+    background: rgba(30, 30, 36, 0.96);
+  }
+}
+
+/* ================================================================
+   Accessibility — increase contrast: stronger borders + text.
+   ================================================================ */
+
+@media (prefers-contrast: more) {
+  .island-shell {
+    --ink: rgba(0, 0, 0, 1);
+    --ink-secondary: rgba(0, 0, 0, 0.85);
+    --ink-tertiary: rgba(0, 0, 0, 0.6);
+    --glass-border: rgba(0, 0, 0, 0.5);
+    --fill-border: rgba(0, 0, 0, 0.4);
+    border-width: 1.5px;
+  }
+
+  .island-shell {
+    box-shadow:
+      var(--glass-shadow),
+      0 0 0 1px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  .candidate,
+  .rule-tabs,
+  .type-select,
+  .island-count,
+  .candidate-badge,
+  .candidate-index {
+    border-width: 1.5px;
+    border-color: rgba(0, 0, 0, 0.4);
+  }
+
+  .candidate.selected {
+    border-color: rgba(0, 122, 255, 0.9);
+  }
+
+  .island-input {
+    text-shadow: none;
+  }
+}
+
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  .island-shell {
+    --ink: rgba(255, 255, 255, 1);
+    --ink-secondary: rgba(255, 255, 255, 0.85);
+    --ink-tertiary: rgba(255, 255, 255, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --fill-border: rgba(255, 255, 255, 0.4);
+  }
+
+  .candidate,
+  .rule-tabs,
+  .type-select,
+  .island-count,
+  .candidate-badge,
+  .candidate-index {
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+
+  .candidate.selected {
+    border-color: rgba(10, 132, 255, 0.9);
+  }
+}
+
+/* ================================================================
+   Accessibility — reduce motion: kill spring/flow animations.
+   ================================================================ */
 
 @media (prefers-reduced-motion: reduce) {
   *,
