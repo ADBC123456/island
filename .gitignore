@@ -9,6 +9,11 @@ bin/
 obj/
 coverage/
 .worktrees/
+.agents/
+.codex/
+CLAUDE.md
+TODO.md
+docs/superpowers/
 .env
 .env.*
 !.env.example
