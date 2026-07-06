@@ -5,7 +5,7 @@ import type { CaseStyle, GenerateNameResult, InsertTextRequest, IslandStatus, Na
 declare global {
   interface Window {
     variableIsland: {
-      generateNames(input: { description: string; caseStyle: CaseStyle; variableType: VariableType }): Promise<GenerateNameResult>;
+      generateNames(input: { description: string; caseStyle: CaseStyle; variableType: VariableType; translatedDescription?: string }): Promise<GenerateNameResult>;
       copyText(text: string): Promise<NativeCommandResult>;
       insertText(request: InsertTextRequest): Promise<NativeCommandResult>;
       onShow(callback: () => void): () => void;

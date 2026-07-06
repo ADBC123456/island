@@ -20,6 +20,8 @@ interface DeepLxConfig {
   timeoutMs: number;
 }
 
+const translationCache = new Map<string, Promise<string | undefined>>();
+
 function readEnv(name: string, fallbackName?: string): string | undefined {
   const value = process.env[name]?.trim();
   if (value) return value;
@@ -107,6 +109,22 @@ export async function translateDescriptionWithDeepLX(description: string): Promi
   const config = readDeepLxConfig();
   if (!text || !config.enabled || !shouldTranslateDescription(text)) return undefined;
 
+  const cacheKey = `${config.endpoint}|${config.sourceLang}|${config.targetLang}|${text}`;
+  const cached = translationCache.get(cacheKey);
+  if (cached) return cached;
+
+  const request = requestDeepLXTranslation(text, config);
+  translationCache.set(cacheKey, request);
+  const result = await request;
+  if (!result) translationCache.delete(cacheKey);
+  if (translationCache.size > 100) {
+    const firstKey = translationCache.keys().next().value;
+    if (firstKey) translationCache.delete(firstKey);
+  }
+  return result;
+}
+
+async function requestDeepLXTranslation(text: string, config: DeepLxConfig): Promise<string | undefined> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
   const headers: Record<string, string> = {

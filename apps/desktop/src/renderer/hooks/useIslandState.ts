@@ -9,6 +9,8 @@ export interface IslandState {
   candidates: NameCandidate[];
   selectedIndex: number;
   message: string;
+  translatedDescription: string;
+  translatedDescriptionSource: string;
 }
 
 export function createInitialIslandState(): IslandState {
@@ -19,7 +21,9 @@ export function createInitialIslandState(): IslandState {
     variableType: 'auto',
     candidates: [],
     selectedIndex: 0,
-    message: ''
+    message: '',
+    translatedDescription: '',
+    translatedDescriptionSource: ''
   };
 }
 

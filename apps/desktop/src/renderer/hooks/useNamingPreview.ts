@@ -6,18 +6,36 @@ export function useNamingPreview(state: IslandState, setState: React.Dispatch<Re
     let cancelled = false;
     const description = state.description.trim();
     if (!description) {
-      setState((current) => ({ ...current, status: 'compact', candidates: [], selectedIndex: 0 }));
+      setState((current) => ({
+        ...current,
+        status: 'compact',
+        candidates: [],
+        selectedIndex: 0,
+        translatedDescription: '',
+        translatedDescriptionSource: ''
+      }));
       return;
     }
 
     const timer = window.setTimeout(async () => {
+      const cachedTranslation = state.translatedDescriptionSource === description
+        ? state.translatedDescription
+        : '';
       const result = await window.variableIsland.generateNames({
         description,
         caseStyle: state.caseStyle,
-        variableType: state.variableType
+        variableType: state.variableType,
+        ...(cachedTranslation ? { translatedDescription: cachedTranslation } : {})
       });
       if (!cancelled) {
-        setState((current) => ({ ...current, status: 'expanded', candidates: result.candidates, selectedIndex: 0 }));
+        setState((current) => ({
+          ...current,
+          status: 'expanded',
+          candidates: result.candidates,
+          selectedIndex: 0,
+          translatedDescription: result.translatedDescription ?? cachedTranslation,
+          translatedDescriptionSource: result.translatedDescription || cachedTranslation ? description : ''
+        }));
       }
     }, 80);
 
@@ -25,5 +43,10 @@ export function useNamingPreview(state: IslandState, setState: React.Dispatch<Re
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [state.description, state.caseStyle, state.variableType, setState]);
+  }, [
+    state.description,
+    state.caseStyle,
+    state.variableType,
+    setState
+  ]);
 }

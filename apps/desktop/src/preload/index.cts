@@ -9,7 +9,7 @@ interface InsertTextRequest {
 }
 
 contextBridge.exposeInMainWorld('variableIsland', {
-  generateNames(input: { description: string; caseStyle: CaseStyle; variableType: VariableType }) {
+  generateNames(input: { description: string; caseStyle: CaseStyle; variableType: VariableType; translatedDescription?: string }) {
     return ipcRenderer.invoke('naming:generate', input);
   },
   copyText(text: string) {
