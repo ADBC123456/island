@@ -342,14 +342,12 @@ button {
 .island-input-stack {
   position: relative;
   min-width: 0;
-  height: 53px;
   display: grid;
   align-content: center;
   gap: 10px;
 }
 
 .island-shell-compact .island-input-stack {
-  height: 30px;
   display: block;
 }
 

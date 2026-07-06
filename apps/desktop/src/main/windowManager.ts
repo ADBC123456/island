@@ -7,8 +7,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WINDOW_PADDING_X = 8;
 const WINDOW_PADDING_TOP = 8;
 const WINDOW_PADDING_BOTTOM = 10;
-// Time for the renderer's morph spring to settle before the OS window shrinks down.
-const SHRINK_DELAY_MS = 320;
+// Time for the renderer's retract animation to settle before the OS window
+// shrinks down. Must stay in sync with shellRetractAnimationMs in
+// src/renderer/motionTokens.ts (main cannot import that ESM module).
+const SHRINK_DELAY_MS = 360;
+export const RETRACT_ANIMATION_MS = 360;
+const COMPACT_SHRINK_DELAY_MS = RETRACT_ANIMATION_MS;
+const SHOW_BLUR_GRACE_MS = 360;
 
 interface IslandSize {
   width: number;
@@ -18,7 +23,7 @@ interface IslandSize {
 // Fallback sizes when the renderer has not reported explicit dimensions yet.
 const fallbackDimensions: Record<Exclude<IslandStatus, 'hidden'>, IslandSize> = {
   compact: { width: 338, height: 56 },
-  expanded: { width: 672, height: 296 },
+  expanded: { width: 704, height: 394 },
   success: { width: 392, height: 60 },
   error: { width: 392, height: 60 }
 };
@@ -26,6 +31,9 @@ const fallbackDimensions: Record<Exclude<IslandStatus, 'hidden'>, IslandSize> = 
 export class WindowManager {
   private window: BrowserWindow | null = null;
   private pendingShrink: NodeJS.Timeout | null = null;
+  private pendingHideRequest: NodeJS.Timeout | null = null;
+  private anchorCenterX: number | null = null;
+  private ignoreBlurUntil = 0;
 
   create(): BrowserWindow {
     const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
@@ -100,7 +108,8 @@ export class WindowManager {
 
     this.window.on('blur', () => {
       if (!diagnosticWindow) {
-        this.hideIsland();
+        if (Date.now() < this.ignoreBlurUntil) return;
+        this.requestHideIsland();
       }
     });
 
@@ -124,6 +133,8 @@ export class WindowManager {
 
   showIsland(): void {
     const win = this.getWindow();
+    this.clearPendingHideRequest();
+    this.ignoreBlurUntil = Date.now() + SHOW_BLUR_GRACE_MS;
     if (process.env.VARIABLE_ISLAND_DIAGNOSTIC_WINDOW !== '1') {
       this.setIslandStatus('compact');
     }
@@ -131,14 +142,35 @@ export class WindowManager {
       win.center();
     } else {
       this.positionTopCenter();
+      this.setIgnoreMouseEvents(false);
     }
     win.show();
+    win.moveTop();
     win.focus();
+    win.webContents.focus();
     win.webContents.send('island:show');
+  }
+
+  requestHideIsland(): void {
+    if (!this.window) return;
+    if (process.env.VARIABLE_ISLAND_DIAGNOSTIC_WINDOW === '1') {
+      this.hideIsland();
+      return;
+    }
+
+    this.clearPendingShrink();
+    this.clearPendingHideRequest();
+    this.setIgnoreMouseEvents(true);
+    this.window.webContents.send('island:hide-request');
+    this.pendingHideRequest = setTimeout(() => {
+      this.pendingHideRequest = null;
+      this.hideIsland();
+    }, RETRACT_ANIMATION_MS);
   }
 
   hideIsland(): void {
     this.clearPendingShrink();
+    this.clearPendingHideRequest();
     if (!this.window) return;
     // Reset to compact footprint so the next summon starts clean and no
     // oversized transparent rect lingers to trap clicks behind the desktop.
@@ -170,9 +202,10 @@ export class WindowManager {
    * the extra area is invisible).
    */
   setIslandStatus(status: IslandStatus, size?: IslandSize): void {
-    if (!this.window || process.env.VARIABLE_ISLAND_DIAGNOSTIC_WINDOW === '1' || status === 'hidden') return;
+    if (!this.window || process.env.VARIABLE_ISLAND_DIAGNOSTIC_WINDOW === '1') return;
 
     this.clearPendingShrink();
+    if (status === 'hidden') return;
 
     const island = size ?? fallbackDimensions[status];
     const targetWidth = island.width + WINDOW_PADDING_X * 2;
@@ -182,16 +215,15 @@ export class WindowManager {
     const unionWidth = Math.max(targetWidth, this.window.isVisible() ? current.width : 0);
     const unionHeight = Math.max(targetHeight, this.window.isVisible() ? current.height : 0);
 
-    this.window.setSize(unionWidth, unionHeight, false);
-    this.positionTopCenter();
+    this.resizeAroundCurrentTopCenter(unionWidth, unionHeight);
 
     if (unionWidth !== targetWidth || unionHeight !== targetHeight) {
+      const shrinkDelay = status === 'compact' ? COMPACT_SHRINK_DELAY_MS : SHRINK_DELAY_MS;
       this.pendingShrink = setTimeout(() => {
         this.pendingShrink = null;
         if (!this.window || this.window.isDestroyed()) return;
-        this.window.setSize(targetWidth, targetHeight, false);
-        this.positionTopCenter();
-      }, SHRINK_DELAY_MS);
+        this.resizeAroundCurrentTopCenter(targetWidth, targetHeight);
+      }, shrinkDelay);
     }
   }
 
@@ -209,13 +241,39 @@ export class WindowManager {
     const winBounds = this.window.getBounds();
     const x = Math.round(bounds.x + (bounds.width - winBounds.width) / 2);
     const y = Math.round(bounds.y + 6);
+    this.anchorCenterX = bounds.x + bounds.width / 2;
     this.window.setPosition(x, y, false);
+  }
+
+  private resizeAroundCurrentTopCenter(width: number, height: number): void {
+    if (!this.window) return;
+    if (!this.window.isVisible()) {
+      this.window.setSize(width, height, false);
+      return;
+    }
+
+    const current = this.window.getBounds();
+    const centerX = this.anchorCenterX ?? current.x + current.width / 2;
+    this.anchorCenterX = centerX;
+    this.window.setBounds({
+      x: Math.round(centerX - width / 2),
+      y: current.y,
+      width,
+      height
+    }, false);
   }
 
   private clearPendingShrink(): void {
     if (this.pendingShrink) {
       clearTimeout(this.pendingShrink);
       this.pendingShrink = null;
+    }
+  }
+
+  private clearPendingHideRequest(): void {
+    if (this.pendingHideRequest) {
+      clearTimeout(this.pendingHideRequest);
+      this.pendingHideRequest = null;
     }
   }
 }
