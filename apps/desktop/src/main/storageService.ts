@@ -15,7 +15,7 @@ export const defaultConfig: AppConfig = {
   deeplxUrl: 'http://127.0.0.1:1188/translate',
   deeplxToken: '',
   deeplxSourceLang: 'auto',
-  deeplxTargetLang: 'EN-US',
+  deeplxTargetLang: 'EN',
   deeplxTimeoutMs: 1800
 };
 

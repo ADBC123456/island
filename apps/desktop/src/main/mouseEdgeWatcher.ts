@@ -15,8 +15,17 @@ let isTriggering = false;
 export function startMouseEdgeWatcher(windowManager: WindowManager): void {
   if (timer) return;
 
-  timer = setInterval(async () => {
+  timer = setInterval(() => {
+    void pollMouseEdge(windowManager).catch((error) => {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`[mouse-edge] watcher skipped: ${message}`);
+    });
+  }, POLL_MS);
+}
+
+async function pollMouseEdge(windowManager: WindowManager): Promise<void> {
     const win = windowManager.getWindow();
+    if (win.isDestroyed()) return;
     if (win.isVisible() || isTriggering) return;
 
     const now = Date.now();
@@ -40,7 +49,6 @@ export function startMouseEdgeWatcher(windowManager: WindowManager): void {
     } finally {
       isTriggering = false;
     }
-  }, POLL_MS);
 }
 
 export function stopMouseEdgeWatcher(): void {

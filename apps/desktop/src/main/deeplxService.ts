@@ -1,7 +1,7 @@
 import { loadConfig } from './storageService.js';
 
 const DEFAULT_DEEPLX_URL = 'http://127.0.0.1:1188/translate';
-const DEFAULT_TARGET_LANG = 'EN-US';
+const DEFAULT_TARGET_LANG = 'EN';
 const DEFAULT_SOURCE_LANG = 'auto';
 const DEFAULT_TIMEOUT_MS = 1800;
 
@@ -39,18 +39,61 @@ function parseTimeout(value: string | undefined): number {
   return timeoutMs;
 }
 
+function pickString(value: string | undefined, fallback: string): string {
+  const trimmed = value?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : fallback;
+}
+
+function normalizeEndpoint(value: string): string {
+  const endpoint = value.trim();
+  if (!endpoint) return DEFAULT_DEEPLX_URL;
+
+  try {
+    const url = new URL(endpoint);
+    if (!url.pathname.endsWith('/translate')) {
+      url.pathname = `${url.pathname.replace(/\/$/, '')}/translate`;
+    }
+    return url.toString();
+  } catch {
+    return endpoint.endsWith('/translate') ? endpoint : `${endpoint.replace(/\/$/, '')}/translate`;
+  }
+}
+
+function normalizeLanguageCode(value: string): string {
+  const normalized = value.trim().toUpperCase();
+  if (!normalized) return DEFAULT_TARGET_LANG;
+  if (normalized === 'AUTO') return 'auto';
+  if (normalized === 'EN-US' || normalized === 'EN-GB') return 'EN';
+  if (normalized === 'ZH-CN' || normalized === 'ZH-HANS') return 'ZH';
+  if (normalized === 'ZH-TW' || normalized === 'ZH-HANT') return 'ZH';
+  return normalized;
+}
+
 function readDeepLxConfig(): DeepLxConfig {
   const appConfig = loadConfig();
+  const configuredTimeout = typeof appConfig.deeplxTimeoutMs === 'number'
+    ? String(appConfig.deeplxTimeoutMs)
+    : undefined;
+  const provider = String(appConfig.translationProvider).trim().toLowerCase();
 
   return {
-    enabled: appConfig.translationProvider === 'deeplx'
+    enabled: provider === 'deeplx'
       && parseEnabled(readEnv('VARIABLE_ISLAND_DEEPLX_ENABLED', 'DEEPLX_ENABLED')),
-    endpoint: readEnv('VARIABLE_ISLAND_DEEPLX_URL', 'DEEPLX_API_URL') ?? appConfig.deeplxUrl ?? DEFAULT_DEEPLX_URL,
+    endpoint: normalizeEndpoint(pickString(
+      readEnv('VARIABLE_ISLAND_DEEPLX_URL', 'DEEPLX_API_URL') ?? appConfig.deeplxUrl,
+      DEFAULT_DEEPLX_URL
+    )),
     token: (readEnv('VARIABLE_ISLAND_DEEPLX_TOKEN', 'DEEPLX_TOKEN') ?? appConfig.deeplxToken) || undefined,
-    sourceLang: readEnv('VARIABLE_ISLAND_DEEPLX_SOURCE_LANG', 'DEEPLX_SOURCE_LANG') ?? appConfig.deeplxSourceLang ?? DEFAULT_SOURCE_LANG,
-    targetLang: readEnv('VARIABLE_ISLAND_DEEPLX_TARGET_LANG', 'DEEPLX_TARGET_LANG') ?? appConfig.deeplxTargetLang ?? DEFAULT_TARGET_LANG,
+    sourceLang: normalizeLanguageCode(pickString(
+      readEnv('VARIABLE_ISLAND_DEEPLX_SOURCE_LANG', 'DEEPLX_SOURCE_LANG') ?? appConfig.deeplxSourceLang,
+      DEFAULT_SOURCE_LANG
+    )),
+    targetLang: normalizeLanguageCode(pickString(
+      readEnv('VARIABLE_ISLAND_DEEPLX_TARGET_LANG', 'DEEPLX_TARGET_LANG') ?? appConfig.deeplxTargetLang,
+      DEFAULT_TARGET_LANG
+    )),
     timeoutMs: parseTimeout(
-      readEnv('VARIABLE_ISLAND_DEEPLX_TIMEOUT_MS', 'DEEPLX_TIMEOUT_MS') ?? String(appConfig.deeplxTimeoutMs)
+      readEnv('VARIABLE_ISLAND_DEEPLX_TIMEOUT_MS', 'DEEPLX_TIMEOUT_MS') ?? configuredTimeout
     )
   };
 }
@@ -96,6 +139,7 @@ export async function translateDescriptionWithDeepLX(description: string): Promi
       return undefined;
     }
 
+    console.log(`[deeplx] translation ok (${config.sourceLang}->${config.targetLang})`);
     return payload.data.trim();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
