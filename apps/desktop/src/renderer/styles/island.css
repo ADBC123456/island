@@ -7,9 +7,15 @@ body,
   overflow: hidden;
   background: transparent;
   font-family: "SF Pro Text", Inter, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
-  color: rgba(0, 0, 0, 0.88);
+  color: rgba(11, 18, 32, 0.92);
   letter-spacing: 0;
   -webkit-font-smoothing: antialiased;
+}
+
+:root {
+  --rebound-ease: cubic-bezier(0.18, 1.2, 0.3, 1);
+  --rebound-fast: 263ms;
+  --rebound-medium: 325ms;
 }
 
 * {
@@ -32,7 +38,15 @@ button {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: 8px;
+  padding-top: 7px;
+  pointer-events: none;
+}
+
+.liquid-glass-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
   pointer-events: none;
 }
 
@@ -51,24 +65,32 @@ button {
    ================================================================ */
 
 .island-shell {
-  /* ink (light) */
-  --ink: rgba(0, 0, 0, 0.88);
-  --ink-secondary: rgba(60, 60, 67, 0.6);
-  --ink-tertiary: rgba(60, 60, 67, 0.3);
+  --ink: rgba(11, 18, 32, 0.94);
+  --ink-secondary: rgba(31, 41, 55, 0.66);
+  --ink-tertiary: rgba(31, 41, 55, 0.42);
   /* system accents */
-  --accent: #007aff;
+  --accent: #0a84ff;
   --success: #34c759;
   --danger: #ff3b30;
-  /* glass tint (Regular, light) — frosted enough for text legibility */
-  --glass-tint: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.5) 52%, rgba(255, 255, 255, 0.22));
-  --glass-base: rgba(248, 248, 250, 0.78);
-  --glass-blur: blur(28px) saturate(170%);
-  --glass-border: rgba(255, 255, 255, 0.75);
-  --glass-hairline: rgba(0, 0, 0, 0.05);
-  --glass-shadow: 0 16px 38px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.1);
-  /* regular control surface */
-  --fill: rgba(120, 120, 128, 0.1);
-  --fill-border: rgba(0, 0, 0, 0.06);
+  --glass-tint: linear-gradient(145deg, rgba(255, 255, 255, 0.64) 0%, rgba(232, 245, 255, 0.46) 46%, rgba(248, 242, 255, 0.4) 100%);
+  --glass-base: rgba(244, 248, 253, 0.82);
+  --glass-blur: blur(22px) saturate(170%) contrast(1.02);
+  --glass-border: rgba(255, 255, 255, 0.64);
+  --glass-hairline: rgba(12, 20, 35, 0.07);
+  --glass-shadow: 0 10px 26px rgba(15, 23, 42, 0.1), 0 1px 5px rgba(15, 23, 42, 0.06);
+  --fill: rgba(255, 255, 255, 0.3);
+  --fill-strong: rgba(255, 255, 255, 0.52);
+  --fill-border: rgba(15, 23, 42, 0.07);
+  --edge-cyan: rgba(74, 203, 255, 0.32);
+  --edge-violet: rgba(143, 118, 255, 0.2);
+  --edge-rose: rgba(255, 112, 172, 0.2);
+  --pointer-x: 50%;
+  --pointer-y: 0%;
+  --rim-angle: 135deg;
+  --rim-power: 0;
+  --rim-opacity: 0.72;
+  --rim-overlay-opacity: 0.62;
+  --glow-opacity: 0.2;
 
   position: relative;
   pointer-events: auto;
@@ -76,16 +98,75 @@ button {
   isolation: isolate;
   transform: translateZ(0);
   color: var(--ink);
-  background: var(--glass-tint), var(--glass-base);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  background:
+    radial-gradient(160px 92px at var(--pointer-x) var(--pointer-y), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06) 42%, transparent 72%),
+    var(--glass-tint),
+    var(--glass-base);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border: 1px solid var(--glass-border);
   box-shadow:
     var(--glass-shadow),
     0 0 0 0.5px var(--glass-hairline),
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.25);
-  transition: box-shadow 180ms ease;
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    inset 0 -1px 0 rgba(122, 164, 214, 0.14),
+    inset 0 0 24px rgba(255, 255, 255, 0.14);
+  transition: box-shadow var(--rebound-medium) var(--rebound-ease), background var(--rebound-medium) ease;
+}
+
+.island-shell-hidden {
+  pointer-events: none;
+  --glass-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+  --rim-opacity: 0.38;
+  --rim-overlay-opacity: 0.28;
+  --glow-opacity: 0;
+}
+
+.island-shell-hidden .island-refract {
+  opacity: 0.42;
+}
+
+.island-shell-hidden .island-content {
+  opacity: 0 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+.island-collapse-core {
+  position: relative;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background:
+    radial-gradient(60% 90% at 50% 0%, rgba(255, 255, 255, 0.32), transparent 68%),
+    rgba(255, 255, 255, 0.08);
+}
+
+.island-refract {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(231, 245, 255, 0.12) 52%, rgba(246, 239, 255, 0.1)),
+    rgba(255, 255, 255, 0.08);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  opacity: 0.98;
+  /* Promote to its own compositor layer so backdrop-filter resamples
+     smoothly during the shell's size morph instead of flashing a raw
+     (un-blurred) frame when the layer is repainted mid-resize. */
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+@supports ((backdrop-filter: url("#island-glass-refraction")) or (-webkit-backdrop-filter: url("#island-glass-refraction"))) {
+  .island-refract {
+    backdrop-filter: url("#island-glass-refraction") var(--glass-blur);
+    -webkit-backdrop-filter: url("#island-glass-refraction") var(--glass-blur);
+  }
 }
 
 /* specular highlight — top-left light source, the most important edge light */
@@ -93,12 +174,16 @@ button {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 1;
   pointer-events: none;
   border-radius: inherit;
   background:
-    radial-gradient(130% 85% at 18% -16%, rgba(255, 255, 255, 0.7), transparent 46%),
-    radial-gradient(90% 70% at 86% 118%, rgba(0, 122, 255, 0.04), transparent 52%);
+    linear-gradient(112deg, rgba(255, 255, 255, 0.46) 0%, rgba(255, 255, 255, 0.12) 34%, transparent 52%),
+    radial-gradient(120% 85% at 16% -22%, rgba(255, 255, 255, 0.42), transparent 45%),
+    radial-gradient(86% 72% at 90% 118%, rgba(74, 203, 255, 0.1), transparent 56%),
+    radial-gradient(72% 54% at 8% 112%, rgba(255, 112, 172, 0.06), transparent 58%);
+  mix-blend-mode: screen;
+  opacity: 0.74;
 }
 
 /* fine grain so the glass does not read as a flat CSS plane */
@@ -106,12 +191,14 @@ button {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 1;
   pointer-events: none;
   border-radius: inherit;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.03;
-  mix-blend-mode: overlay;
+  background:
+    linear-gradient(90deg, rgba(74, 203, 255, 0.1), transparent 12%, transparent 88%, rgba(255, 112, 172, 0.1)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  mix-blend-mode: soft-light;
 }
 
 /* ----------------------------------------------------------------
@@ -129,112 +216,141 @@ button {
 .island-rim {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 3;
   pointer-events: none;
   border-radius: inherit;
-  padding: 1.5px;
+  padding: 2px;
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  background: linear-gradient(
-    var(--rim-angle, 135deg),
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.18) 33%,
-    rgba(255, 255, 255, 0.5) 66%,
-    rgba(255, 255, 255, 0) 100%
-  );
+  background:
+    conic-gradient(from var(--rim-angle), transparent 0deg, var(--edge-cyan) 46deg, rgba(255, 255, 255, 0.96) 126deg, var(--edge-rose) 214deg, transparent 318deg),
+    linear-gradient(
+      var(--rim-angle),
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.24) 30%,
+      rgba(255, 255, 255, 0.68) 60%,
+      rgba(255, 255, 255, 0) 100%
+    );
   box-shadow:
-    0 0 0 0.5px rgba(255, 255, 255, 0.5) inset,
-    0 1px 3px rgba(255, 255, 255, 0.25) inset;
+    0 0 0 0.5px rgba(255, 255, 255, 0.48) inset,
+    0 1px 3px rgba(255, 255, 255, 0.22) inset,
+    0 0 10px rgba(74, 203, 255, 0.08);
+  filter: saturate(1.18);
   mix-blend-mode: screen;
-  opacity: 0.9;
+  /* Independent compositor layer keeps the mask-composite rim stable while
+     the shell resizes; without this the ring can flash full-frame for one
+     frame when the layer is repainted mid-morph. */
+  will-change: transform;
+  transform: translateZ(0);
+  opacity: var(--rim-opacity);
 }
 
 .island-rim-overlay {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 3;
   pointer-events: none;
   border-radius: inherit;
-  padding: 1.5px;
+  padding: 2px;
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   background: linear-gradient(
     var(--rim-angle, 135deg),
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.35) 33%,
-    rgba(255, 255, 255, 0.7) 66%,
+    rgba(255, 255, 255, 0.28) 28%,
+    rgba(255, 255, 255, 0.78) 58%,
+    rgba(143, 118, 255, 0.22) 76%,
     rgba(255, 255, 255, 0) 100%
   );
   mix-blend-mode: overlay;
+  will-change: transform;
+  transform: translateZ(0);
+  opacity: var(--rim-overlay-opacity);
 }
 
 /* hover/active radial highlight — like the glass catching a light source */
 .island-glow {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 2;
   pointer-events: none;
   border-radius: inherit;
-  opacity: 0;
-  background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 55%);
-  mix-blend-mode: overlay;
+  opacity: var(--glow-opacity);
+  background:
+    radial-gradient(170px 92px at var(--pointer-x) var(--pointer-y), rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.12) 38%, transparent 72%),
+    radial-gradient(120% 80% at 50% 0%, rgba(255, 255, 255, 0.14), transparent 58%);
+  mix-blend-mode: screen;
   transition: opacity 180ms ease;
 }
 
 .island-shell:hover .island-glow {
-  opacity: 0.5;
+  opacity: 0.38;
 }
 
 .island-shell:active .island-glow {
-  opacity: 0.8;
+  opacity: 0.46;
 }
 
 /* success / error glow on the shell rim */
 .island-shell-success {
   box-shadow:
     var(--glass-shadow),
-    0 0 0 1px rgba(52, 199, 89, 0.3),
-    0 0 26px rgba(52, 199, 89, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    0 0 0 1px rgba(52, 199, 89, 0.22),
+    0 0 14px rgba(52, 199, 89, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62);
 }
 
 .island-shell-error {
   box-shadow:
     var(--glass-shadow),
-    0 0 0 1px rgba(255, 59, 48, 0.3),
-    0 0 26px rgba(255, 59, 48, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    0 0 0 1px rgba(255, 59, 48, 0.22),
+    0 0 14px rgba(255, 59, 48, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62);
 }
 
 .island-content {
   position: relative;
-  z-index: 3;
-  padding: 12px 16px 14px;
+  z-index: 4;
+  padding: 0 16px 15px;
+}
+
+.island-shell-compact .island-content {
+  height: 56px;
+  display: grid;
+  align-items: center;
+  padding-block: 0;
 }
 
 .island-input-row {
-  min-height: 32px;
+  height: 56px;
+  min-height: 56px;
   display: grid;
-  grid-template-columns: 12px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
 }
 
-.island-state-mark {
-  width: 7px;
-  height: 7px;
-  justify-self: center;
-  border-radius: 999px;
-  background: var(--accent);
-  box-shadow: 0 0 8px rgba(0, 122, 255, 0.55);
+.island-shell-compact .island-input-row {
+  height: 100%;
+  min-height: 56px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
 }
 
 .island-input-stack {
+  position: relative;
   min-width: 0;
+  height: 53px;
   display: grid;
-  gap: 1px;
+  align-content: center;
+  gap: 10px;
+}
+
+.island-shell-compact .island-input-stack {
+  height: 30px;
+  display: block;
 }
 
 .island-eyebrow {
@@ -245,9 +361,14 @@ button {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateZ(0);
+  will-change: opacity;
 }
 
 .island-input {
+  display: block;
   width: 100%;
   height: 30px;
   border: none;
@@ -256,8 +377,9 @@ button {
   color: var(--ink);
   caret-color: var(--accent);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 20px;
+  padding: 5px 0;
   text-align: left;
   /* vibrancy-style legibility lift over any backdrop */
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
@@ -267,6 +389,10 @@ button {
   text-align: center;
 }
 
+.island-shell-compact .island-input:not(:placeholder-shown) {
+  text-align: left;
+}
+
 .island-input::placeholder {
   color: var(--ink-secondary);
   font-weight: 500;
@@ -274,14 +400,17 @@ button {
 
 .island-count {
   min-width: 50px;
-  height: 26px;
+  height: 28px;
   display: inline-grid;
   place-items: center;
   padding: 0 10px;
   border-radius: 999px;
   color: var(--ink-secondary);
-  background: var(--fill);
-  border: 1px solid var(--fill-border);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.48), rgba(220, 237, 255, 0.28));
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.52),
+    0 1px 4px rgba(15, 23, 42, 0.05);
   font-size: 11px;
   font-weight: 650;
   line-height: 1;
@@ -294,14 +423,14 @@ button {
 }
 
 .expanded-content {
-  padding-top: 12px;
+  padding-top: 13px;
 }
 
 .control-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 128px;
+  grid-template-columns: minmax(0, 1fr) 124px;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
@@ -309,28 +438,43 @@ button {
 .rule-tabs {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
   min-width: 0;
-  padding: 3px;
+  height: 54px;
+  padding: 10px;
   border-radius: 999px;
-  background: var(--fill);
-  border: 1px solid var(--fill-border);
-  box-shadow: inset 0 0.5px 2px rgba(0, 0, 0, 0.06);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.34), rgba(215, 232, 255, 0.18)),
+    rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.44);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.38),
+    inset 0 -1px 2px rgba(15, 23, 42, 0.04),
+    0 1px 5px rgba(15, 23, 42, 0.04);
+  backdrop-filter: blur(14px) saturate(145%);
+  -webkit-backdrop-filter: blur(14px) saturate(145%);
 }
 
 .rule-tab {
   position: relative;
   min-width: 0;
-  height: 32px;
+  height: 34px;
+  display: grid;
+  place-items: center;
   border: none;
   color: var(--ink-secondary);
   background: transparent;
   border-radius: 999px;
   cursor: pointer;
-  transition: color 140ms ease;
+  transition: color 140ms ease, transform var(--rebound-fast) var(--rebound-ease);
 }
 
 .rule-tab.selected {
   color: var(--ink);
+}
+
+.rule-tab:active {
+  transform: scale(0.98);
 }
 
 .rule-tab:focus-visible,
@@ -345,12 +489,15 @@ button {
   position: absolute;
   inset: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.96);
-  border: 0.5px solid rgba(0, 0, 0, 0.04);
+  background:
+    radial-gradient(80% 130% at 50% 0%, rgba(255, 255, 255, 0.72), transparent 62%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.58), rgba(222, 239, 255, 0.42));
+  border: 1px solid rgba(255, 255, 255, 0.62);
   box-shadow:
-    0 3px 8px rgba(0, 0, 0, 0.12),
-    0 1px 2px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    0 2px 8px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.66),
+    inset 0 -1px 0 rgba(73, 145, 255, 0.12),
+    0 0 0 0.5px rgba(10, 132, 255, 0.1);
 }
 
 .rule-tab-label {
@@ -360,29 +507,35 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding: 0 5px;
+  padding: 0 10px;
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 720;
 }
 
 .type-select {
-  width: 128px;
-  height: 38px;
-  border: 1px solid var(--fill-border);
+  width: 124px;
+  height: 54px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 999px;
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+  background-color: rgba(255, 255, 255, 0.24);
+  box-shadow:
+    0 1px 5px rgba(15, 23, 42, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.52),
+    inset 0 -1px 0 rgba(15, 23, 42, 0.04);
   padding: 0 14px;
   outline: none;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M1 1l3 3 3-3' fill='none' stroke='rgba(60,60,67,0.6)' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M1 1l3 3 3-3' fill='none' stroke='rgba(60,60,67,0.6)' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E"),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.42), rgba(220, 237, 255, 0.28));
   background-repeat: no-repeat;
-  background-position: right 13px center;
-  transition: background 140ms ease, box-shadow 140ms ease;
+  background-position: right 13px center, center;
+  background-size: 8px 5px, 100% 100%;
+  transition: background 140ms ease, box-shadow var(--rebound-fast) var(--rebound-ease);
 }
 
 .type-select option {
@@ -392,11 +545,11 @@ button {
 
 .candidate-list {
   display: grid;
-  gap: 6px;
-  max-height: 176px;
+  gap: 10px;
+  max-height: 244px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-right: 2px;
+  padding: 10px;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.16) transparent;
 }
@@ -418,32 +571,47 @@ button {
 .candidate {
   width: 100%;
   min-width: 0;
-  height: 50px;
-  border: 1px solid var(--fill-border);
-  border-radius: 16px;
+  height: 68px;
+  border: 1px solid rgba(255, 255, 255, 0.44);
+  border-radius: 14px;
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 54px;
+  grid-template-columns: 34px minmax(0, 1fr) 58px;
   align-items: center;
   gap: 12px;
   padding: 0 12px;
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.5);
+  background:
+    radial-gradient(100px 64px at 12% 0%, rgba(255, 255, 255, 0.48), transparent 62%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.34), rgba(225, 237, 252, 0.24));
   cursor: pointer;
   text-align: left;
-  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+  box-shadow:
+    0 1px 6px rgba(15, 23, 42, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.44),
+    inset 0 -1px 0 rgba(15, 23, 42, 0.04);
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    box-shadow var(--rebound-fast) var(--rebound-ease);
 }
 
 .candidate:hover {
-  background: rgba(255, 255, 255, 0.78);
-  border-color: rgba(0, 0, 0, 0.08);
+  background:
+    radial-gradient(110px 70px at 12% 0%, rgba(255, 255, 255, 0.58), transparent 62%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.42), rgba(226, 240, 255, 0.32));
+  border-color: rgba(255, 255, 255, 0.56);
 }
 
 .candidate.selected {
-  background: rgba(0, 122, 255, 0.1);
-  border-color: rgba(0, 122, 255, 0.42);
+  background:
+    radial-gradient(120px 76px at 12% 0%, rgba(255, 255, 255, 0.62), transparent 62%),
+    linear-gradient(145deg, rgba(214, 238, 255, 0.48), rgba(235, 229, 255, 0.36));
+  border-color: rgba(10, 132, 255, 0.48);
   box-shadow:
-    0 3px 12px rgba(0, 122, 255, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    0 2px 8px rgba(10, 132, 255, 0.1),
+    0 0 0 0.5px rgba(10, 132, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.52),
+    inset 0 -1px 0 rgba(10, 132, 255, 0.12);
 }
 
 .candidate:active {
@@ -453,14 +621,15 @@ button {
 }
 
 .candidate-index {
-  width: 28px;
-  height: 26px;
+  width: 30px;
+  height: 28px;
   display: inline-grid;
   place-items: center;
   border-radius: 999px;
   color: var(--ink-secondary);
-  background: var(--fill);
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.36);
+  border: 1px solid rgba(255, 255, 255, 0.46);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
   font-size: 11px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -468,22 +637,22 @@ button {
 
 .candidate.selected .candidate-index {
   color: #0062cc;
-  border-color: rgba(0, 122, 255, 0.26);
-  background: rgba(0, 122, 255, 0.12);
+  border-color: rgba(10, 132, 255, 0.34);
+  background: rgba(10, 132, 255, 0.12);
 }
 
 .candidate-main {
   min-width: 0;
   display: grid;
-  gap: 2px;
+  gap: 10px;
 }
 
 .candidate-name {
   overflow: hidden;
   color: var(--ink);
   font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
-  font-size: 14px;
-  font-weight: 650;
+  font-size: 14.5px;
+  font-weight: 720;
   line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -498,15 +667,16 @@ button {
 
 .candidate-badge {
   justify-self: end;
-  min-width: 46px;
-  height: 24px;
+  min-width: 50px;
+  height: 26px;
   display: inline-grid;
   place-items: center;
-  padding: 0 8px;
+  padding: 0 10px;
   border-radius: 999px;
   color: var(--ink-secondary);
-  background: var(--fill);
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.36);
+  border: 1px solid rgba(255, 255, 255, 0.46);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
   font-size: 11px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -515,8 +685,8 @@ button {
 /* sole emphasis color — only the "primary" badge */
 .candidate-badge.primary {
   color: #8a5a00;
-  background: rgba(255, 204, 0, 0.22);
-  border: 1px solid rgba(255, 179, 0, 0.36);
+  background: linear-gradient(145deg, rgba(255, 219, 87, 0.34), rgba(255, 244, 190, 0.26));
+  border: 1px solid rgba(255, 179, 0, 0.34);
 }
 
 .empty-candidates {
@@ -524,11 +694,16 @@ button {
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 5px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 18px;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 14px;
   color: var(--ink-secondary);
-  background: rgba(255, 255, 255, 0.4);
+  background:
+    radial-gradient(130px 80px at 50% 0%, rgba(255, 255, 255, 0.42), transparent 68%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.28), rgba(225, 237, 252, 0.2));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -1px 0 rgba(15, 23, 42, 0.04);
 }
 
 .empty-title {
@@ -583,28 +758,34 @@ button {
     --ink: rgba(255, 255, 255, 0.96);
     --ink-secondary: rgba(235, 235, 245, 0.6);
     --ink-tertiary: rgba(235, 235, 245, 0.3);
-    --glass-tint: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06) 52%, rgba(255, 255, 255, 0.02));
-    --glass-base: rgba(22, 22, 28, 0.7);
-    --glass-blur: blur(30px) saturate(150%) brightness(0.96);
+    --glass-tint: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(45, 61, 86, 0.46) 45%, rgba(47, 38, 70, 0.4));
+    --glass-base: rgba(20, 25, 35, 0.56);
+    --glass-blur: blur(22px) saturate(150%) brightness(0.94);
     --glass-border: rgba(255, 255, 255, 0.14);
     --glass-hairline: rgba(0, 0, 0, 0.5);
-    --glass-shadow: 0 16px 38px rgba(0, 0, 0, 0.54), 0 4px 12px rgba(0, 0, 0, 0.36);
-    --fill: rgba(120, 120, 128, 0.24);
-    --fill-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 10px 26px rgba(0, 0, 0, 0.32), 0 1px 5px rgba(0, 0, 0, 0.22);
+    --fill: rgba(255, 255, 255, 0.1);
+    --fill-strong: rgba(255, 255, 255, 0.16);
+    --fill-border: rgba(255, 255, 255, 0.1);
+    --edge-cyan: rgba(78, 214, 255, 0.38);
+    --edge-violet: rgba(154, 127, 255, 0.28);
+    --edge-rose: rgba(255, 118, 180, 0.2);
   }
 
   .island-shell {
     box-shadow:
       var(--glass-shadow),
       0 0 0 0.5px var(--glass-hairline),
-      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
       inset 0 -1px 0 rgba(255, 255, 255, 0.04);
   }
 
   .island-shell::before {
     background:
-      radial-gradient(130% 85% at 18% -16%, rgba(255, 255, 255, 0.18), transparent 46%),
-      radial-gradient(90% 70% at 86% 118%, rgba(10, 132, 255, 0.08), transparent 52%);
+      linear-gradient(112deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.06) 34%, transparent 52%),
+      radial-gradient(120% 85% at 16% -22%, rgba(255, 255, 255, 0.18), transparent 45%),
+      radial-gradient(86% 72% at 90% 118%, rgba(78, 214, 255, 0.08), transparent 56%),
+      radial-gradient(72% 54% at 8% 112%, rgba(255, 118, 180, 0.05), transparent 58%);
   }
 
   .island-input {
@@ -612,7 +793,9 @@ button {
   }
 
   .rule-tab-active {
-    background: rgba(255, 255, 255, 0.16);
+    background:
+      radial-gradient(80% 130% at 50% 0%, rgba(255, 255, 255, 0.18), transparent 62%),
+      linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(74, 96, 130, 0.16));
     border: 0.5px solid rgba(255, 255, 255, 0.12);
     box-shadow:
       0 3px 8px rgba(0, 0, 0, 0.34),
@@ -621,25 +804,34 @@ button {
   }
 
   .type-select {
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+    background-color: rgba(255, 255, 255, 0.08);
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M1 1l3 3 3-3' fill='none' stroke='rgba(235,235,245,0.68)' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E"),
+      linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(74, 96, 130, 0.12));
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
   }
 
   .candidate {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.08);
+    background:
+      radial-gradient(100px 64px at 12% 0%, rgba(255, 255, 255, 0.1), transparent 62%),
+      linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(86, 110, 144, 0.09));
+    border-color: rgba(255, 255, 255, 0.12);
   }
 
   .candidate:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.14);
+    background:
+      radial-gradient(110px 70px at 12% 0%, rgba(255, 255, 255, 0.14), transparent 62%),
+      linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(86, 110, 144, 0.13));
+    border-color: rgba(255, 255, 255, 0.18);
   }
 
   .candidate.selected {
-    background: rgba(10, 132, 255, 0.2);
+    background:
+      radial-gradient(120px 76px at 12% 0%, rgba(255, 255, 255, 0.16), transparent 62%),
+      linear-gradient(145deg, rgba(10, 132, 255, 0.18), rgba(136, 114, 255, 0.12));
     border-color: rgba(10, 132, 255, 0.5);
     box-shadow:
-      0 3px 12px rgba(0, 0, 0, 0.32),
+      0 2px 8px rgba(0, 0, 0, 0.22),
       inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
@@ -650,7 +842,9 @@ button {
   }
 
   .empty-candidates {
-    background: rgba(255, 255, 255, 0.04);
+    background:
+      radial-gradient(130px 80px at 50% 0%, rgba(255, 255, 255, 0.1), transparent 68%),
+      linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(86, 110, 144, 0.08));
     border-color: rgba(255, 255, 255, 0.07);
   }
 
@@ -690,9 +884,12 @@ button {
   }
 
   .candidate,
-  .rule-tabs,
-  .type-select {
+  .rule-tabs {
     background: rgba(248, 248, 250, 0.96);
+  }
+
+  .type-select {
+    background-color: rgba(248, 248, 250, 0.96);
   }
 
   /* no glassy rim under reduced transparency — the edge is already solid */
@@ -711,9 +908,12 @@ button {
   }
 
   .candidate,
-  .rule-tabs,
-  .type-select {
+  .rule-tabs {
     background: rgba(30, 30, 36, 0.96);
+  }
+
+  .type-select {
+    background-color: rgba(30, 30, 36, 0.96);
   }
 }
 
