@@ -34,7 +34,14 @@ export function registerIpcHandlers(windowManager: WindowManager): void {
     windowManager.hideIsland();
   });
 
-  ipcMain.handle('window:set-island-status', async (_event, status: IslandStatus) => {
-    windowManager.setIslandStatus(status);
-  });
+  ipcMain.handle(
+    'window:set-island-status',
+    async (_event, payload: IslandStatus | { status: IslandStatus; width: number; height: number }) => {
+      if (typeof payload === 'string') {
+        windowManager.setIslandStatus(payload);
+      } else {
+        windowManager.setIslandStatus(payload.status, { width: payload.width, height: payload.height });
+      }
+    }
+  );
 }

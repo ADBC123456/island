@@ -7,8 +7,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WINDOW_PADDING_X = 8;
 const WINDOW_PADDING_TOP = 8;
 const WINDOW_PADDING_BOTTOM = 10;
+// Time for the renderer's morph spring to settle before the OS window shrinks down.
+const SHRINK_DELAY_MS = 380;
 
-const islandDimensions: Record<Exclude<IslandStatus, 'hidden'>, { width: number; height: number }> = {
+interface IslandSize {
+  width: number;
+  height: number;
+}
+
+// Fallback sizes when the renderer has not reported explicit dimensions yet.
+const fallbackDimensions: Record<Exclude<IslandStatus, 'hidden'>, IslandSize> = {
   compact: { width: 338, height: 56 },
   expanded: { width: 672, height: 296 },
   success: { width: 392, height: 60 },
@@ -17,6 +25,7 @@ const islandDimensions: Record<Exclude<IslandStatus, 'hidden'>, { width: number;
 
 export class WindowManager {
   private window: BrowserWindow | null = null;
+  private pendingShrink: NodeJS.Timeout | null = null;
 
   create(): BrowserWindow {
     const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
@@ -37,7 +46,10 @@ export class WindowManager {
       webPreferences: {
         preload: path.join(__dirname, '../preload/index.cjs'),
         contextIsolation: true,
-        nodeIntegration: false
+        nodeIntegration: false,
+        // Keep the hidden renderer fully throttled so the island costs ~0 CPU while idle.
+        backgroundThrottling: true,
+        spellcheck: false
       }
     });
 
@@ -118,24 +130,45 @@ export class WindowManager {
     }
     win.show();
     win.focus();
-    console.log('[window] showIsland', win.getBounds());
     win.webContents.send('island:show');
   }
 
   hideIsland(): void {
+    this.clearPendingShrink();
     if (this.window) this.window.hide();
   }
 
-  setIslandStatus(status: IslandStatus): void {
+  /**
+   * Resize the OS window to fit the island.
+   * Growing applies immediately; shrinking waits for the renderer's spring to
+   * settle so the island is never clipped mid-animation. In between, the
+   * window covers the union of the old and new bounds (it is transparent, so
+   * the extra area is invisible).
+   */
+  setIslandStatus(status: IslandStatus, size?: IslandSize): void {
     if (!this.window || process.env.VARIABLE_ISLAND_DIAGNOSTIC_WINDOW === '1' || status === 'hidden') return;
 
-    const dimensions = islandDimensions[status];
-    this.window.setSize(
-      dimensions.width + WINDOW_PADDING_X * 2,
-      dimensions.height + WINDOW_PADDING_TOP + WINDOW_PADDING_BOTTOM,
-      false
-    );
+    this.clearPendingShrink();
+
+    const island = size ?? fallbackDimensions[status];
+    const targetWidth = island.width + WINDOW_PADDING_X * 2;
+    const targetHeight = island.height + WINDOW_PADDING_TOP + WINDOW_PADDING_BOTTOM;
+    const current = this.window.getBounds();
+
+    const unionWidth = Math.max(targetWidth, this.window.isVisible() ? current.width : 0);
+    const unionHeight = Math.max(targetHeight, this.window.isVisible() ? current.height : 0);
+
+    this.window.setSize(unionWidth, unionHeight, false);
     this.positionTopCenter();
+
+    if (unionWidth !== targetWidth || unionHeight !== targetHeight) {
+      this.pendingShrink = setTimeout(() => {
+        this.pendingShrink = null;
+        if (!this.window || this.window.isDestroyed()) return;
+        this.window.setSize(targetWidth, targetHeight, false);
+        this.positionTopCenter();
+      }, SHRINK_DELAY_MS);
+    }
   }
 
   positionTopCenter(): void {
@@ -153,5 +186,12 @@ export class WindowManager {
     const x = Math.round(bounds.x + (bounds.width - winBounds.width) / 2);
     const y = Math.round(bounds.y + 6);
     this.window.setPosition(x, y, false);
+  }
+
+  private clearPendingShrink(): void {
+    if (this.pendingShrink) {
+      clearTimeout(this.pendingShrink);
+      this.pendingShrink = null;
+    }
   }
 }

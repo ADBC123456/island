@@ -4,35 +4,49 @@ import { startMouseEdgeWatcher, stopMouseEdgeWatcher } from './mouseEdgeWatcher.
 import { registerShortcuts, unregisterShortcuts } from './shortcutManager.js';
 import { WindowManager } from './windowManager.js';
 
-let windowManager: WindowManager;
-
-async function bootstrap(): Promise<void> {
-  await app.whenReady();
-  windowManager = new WindowManager();
-  windowManager.create();
-  registerIpcHandlers(windowManager);
-  registerShortcuts(windowManager);
-  startMouseEdgeWatcher(windowManager);
-
-  if (process.env.VITE_DEV_SERVER_URL) {
-    setTimeout(() => {
-      console.log('[dev] showing island once for startup diagnostics');
-      windowManager.showIsland();
-    }, 1000);
-  }
-
-  app.on('activate', () => {
-    windowManager.showIsland();
-  });
+// One island per machine; a second launch just exits.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  bootstrapApp();
 }
 
-app.on('will-quit', () => {
-  stopMouseEdgeWatcher();
-  unregisterShortcuts();
-});
+function bootstrapApp(): void {
+  let windowManager: WindowManager | undefined;
 
-app.on('window-all-closed', (event: Event) => {
-  event.preventDefault();
-});
+  app.on('second-instance', () => {
+    windowManager?.showIsland();
+  });
 
-void bootstrap();
+  async function bootstrap(): Promise<void> {
+    await app.whenReady();
+    const manager = new WindowManager();
+    windowManager = manager;
+    manager.create();
+    registerIpcHandlers(manager);
+    registerShortcuts(manager);
+    startMouseEdgeWatcher(manager);
+
+    if (process.env.VITE_DEV_SERVER_URL) {
+      setTimeout(() => {
+        console.log('[dev] showing island once for startup diagnostics');
+        manager.showIsland();
+      }, 1000);
+    }
+
+    app.on('activate', () => {
+      manager.showIsland();
+    });
+  }
+
+  app.on('will-quit', () => {
+    stopMouseEdgeWatcher();
+    unregisterShortcuts();
+  });
+
+  app.on('window-all-closed', (event: Event) => {
+    event.preventDefault();
+  });
+
+  void bootstrap();
+}

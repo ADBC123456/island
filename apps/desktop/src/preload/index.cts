@@ -23,8 +23,8 @@ contextBridge.exposeInMainWorld('variableIsland', {
     ipcRenderer.on('island:show', listener);
     return () => ipcRenderer.removeListener('island:show', listener);
   },
-  setIslandStatus(status: IslandStatus) {
-    return ipcRenderer.invoke('window:set-island-status', status);
+  setIslandStatus(payload: { status: IslandStatus; width: number; height: number }) {
+    return ipcRenderer.invoke('window:set-island-status', payload);
   },
   hideIsland() {
     return ipcRenderer.invoke('window:hide-island');

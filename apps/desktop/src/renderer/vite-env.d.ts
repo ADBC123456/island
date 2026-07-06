@@ -9,7 +9,7 @@ declare global {
       copyText(text: string): Promise<NativeCommandResult>;
       insertText(request: InsertTextRequest): Promise<NativeCommandResult>;
       onShow(callback: () => void): () => void;
-      setIslandStatus(status: IslandStatus): Promise<void>;
+      setIslandStatus(payload: { status: IslandStatus; width: number; height: number }): Promise<void>;
       hideIsland(): Promise<void>;
     };
   }

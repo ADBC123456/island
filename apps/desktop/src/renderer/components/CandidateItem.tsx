@@ -18,17 +18,19 @@ function reasonLabel(reason?: string): string {
   return '候选命名';
 }
 
+const itemSpring = { type: 'spring', stiffness: 480, damping: 32, mass: 0.7 } as const;
+
 export function CandidateItem({ candidate, selected, index, onSelect }: Props) {
   return (
     <motion.button
       className={selected ? 'candidate selected' : 'candidate'}
       type="button"
       aria-pressed={selected}
-      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+      layout="position"
+      initial={{ opacity: 0, y: 12, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      whileHover={{ scale: 1.01, y: -1 }}
-      whileTap={{ scale: 0.982 }}
-      transition={{ delay: index * 0.035, type: 'spring', stiffness: 330, damping: 24, mass: 0.72 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ ...itemSpring, delay: Math.min(index * 0.03, 0.12) }}
       onClick={onSelect}
     >
       <span className="candidate-index">{String(index + 1).padStart(2, '0')}</span>

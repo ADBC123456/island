@@ -23,7 +23,7 @@ export function NamingRuleTabs({ value, onChange }: Props) {
             <motion.span
               layoutId="active-rule"
               className="rule-tab-active"
-              transition={{ type: 'spring', stiffness: 360, damping: 28, mass: 0.7 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 34, mass: 0.7 }}
             />
           )}
           <span className="rule-tab-label">{rule}</span>
