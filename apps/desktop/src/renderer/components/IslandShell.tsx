@@ -6,6 +6,7 @@ import { CandidateList } from './CandidateList';
 import { StatusToast } from './StatusToast';
 import { ShortcutHints } from './ShortcutHints';
 import { islandDimensions } from '../islandMetrics';
+import { useMouseCapture } from '../hooks/useMouseCapture';
 import type { IslandState } from '../hooks/useIslandState';
 
 interface Props {
@@ -25,10 +26,13 @@ export function IslandShell({ state, setState }: Props) {
   const isFeedback = state.status === 'success' || state.status === 'error';
   const hasCandidates = state.candidates.length > 0;
   const size = islandDimensions(state.status, state.candidates.length);
+  // Only capture clicks when the island is actually visible.
+  const shellRef = useMouseCapture(state.status !== 'hidden');
 
   return (
     <main className="island-stage">
       <motion.section
+        ref={shellRef}
         className={`island-shell island-shell-${state.status}`}
         initial={{ opacity: 0, scale: 0.68, y: -16, ...size }}
         animate={{ ...size, opacity: 1, y: 0, scale: 1 }}

@@ -26,6 +26,9 @@ contextBridge.exposeInMainWorld('variableIsland', {
   setIslandStatus(payload: { status: IslandStatus; width: number; height: number }) {
     return ipcRenderer.invoke('window:set-island-status', payload);
   },
+  setIgnoreMouseEvents(ignore: boolean) {
+    return ipcRenderer.invoke('window:set-ignore-mouse-events', ignore);
+  },
   hideIsland() {
     return ipcRenderer.invoke('window:hide-island');
   }

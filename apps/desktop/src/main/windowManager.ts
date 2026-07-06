@@ -8,7 +8,7 @@ const WINDOW_PADDING_X = 8;
 const WINDOW_PADDING_TOP = 8;
 const WINDOW_PADDING_BOTTOM = 10;
 // Time for the renderer's morph spring to settle before the OS window shrinks down.
-const SHRINK_DELAY_MS = 380;
+const SHRINK_DELAY_MS = 320;
 
 interface IslandSize {
   width: number;
@@ -58,6 +58,10 @@ export class WindowManager {
     if (diagnosticWindow) {
       this.window.center();
     } else {
+      // Transparent windows swallow clicks across their whole rect. Default to
+      // pass-through; the renderer re-enables capture while the cursor is over
+      // the visible island (window:set-ignore-mouse-events).
+      this.window.setIgnoreMouseEvents(true, { forward: true });
       this.setIslandStatus('compact');
       this.positionTopCenter();
     }
@@ -135,7 +139,27 @@ export class WindowManager {
 
   hideIsland(): void {
     this.clearPendingShrink();
-    if (this.window) this.window.hide();
+    if (!this.window) return;
+    // Reset to compact footprint so the next summon starts clean and no
+    // oversized transparent rect lingers to trap clicks behind the desktop.
+    if (process.env.VARIABLE_ISLAND_DIAGNOSTIC_WINDOW !== '1') {
+      this.setIgnoreMouseEvents(true);
+      const compact = fallbackDimensions.compact;
+      this.window.setSize(
+        compact.width + WINDOW_PADDING_X * 2,
+        compact.height + WINDOW_PADDING_TOP + WINDOW_PADDING_BOTTOM,
+        false
+      );
+      this.positionTopCenter();
+    }
+    this.window.hide();
+  }
+
+  setIgnoreMouseEvents(ignore: boolean): void {
+    if (!this.window || process.env.VARIABLE_ISLAND_DIAGNOSTIC_WINDOW === '1') return;
+    // `forward: true` keeps mousemove flowing to the renderer so it can
+    // re-capture when the cursor re-enters the visible island.
+    this.window.setIgnoreMouseEvents(ignore, { forward: true });
   }
 
   /**

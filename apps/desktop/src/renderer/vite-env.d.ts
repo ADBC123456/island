@@ -10,6 +10,7 @@ declare global {
       insertText(request: InsertTextRequest): Promise<NativeCommandResult>;
       onShow(callback: () => void): () => void;
       setIslandStatus(payload: { status: IslandStatus; width: number; height: number }): Promise<void>;
+      setIgnoreMouseEvents(ignore: boolean): Promise<void>;
       hideIsland(): Promise<void>;
     };
   }

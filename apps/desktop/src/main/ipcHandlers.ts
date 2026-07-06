@@ -44,4 +44,10 @@ export function registerIpcHandlers(windowManager: WindowManager): void {
       }
     }
   );
+
+  // Renderer toggles click capture as the cursor enters/leaves the visible
+  // island so the transparent window never blocks the apps behind it.
+  ipcMain.handle('window:set-ignore-mouse-events', async (_event, ignore: boolean) => {
+    windowManager.setIgnoreMouseEvents(ignore);
+  });
 }
