@@ -59,13 +59,13 @@ button {
   --accent: #007aff;
   --success: #34c759;
   --danger: #ff3b30;
-  /* glass tint (Clear, light) */
-  --glass-tint: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.18) 52%, rgba(255, 255, 255, 0.06));
-  --glass-base: rgba(248, 248, 250, 0.5);
-  --glass-blur: blur(22px) saturate(180%);
-  --glass-border: rgba(255, 255, 255, 0.65);
+  /* glass tint (Regular, light) — frosted enough for text legibility */
+  --glass-tint: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.5) 52%, rgba(255, 255, 255, 0.22));
+  --glass-base: rgba(248, 248, 250, 0.78);
+  --glass-blur: blur(28px) saturate(170%);
+  --glass-border: rgba(255, 255, 255, 0.75);
   --glass-hairline: rgba(0, 0, 0, 0.05);
-  --glass-shadow: 0 14px 34px rgba(0, 0, 0, 0.16), 0 3px 10px rgba(0, 0, 0, 0.1);
+  --glass-shadow: 0 16px 38px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.1);
   /* regular control surface */
   --fill: rgba(120, 120, 128, 0.1);
   --fill-border: rgba(0, 0, 0, 0.06);
@@ -506,12 +506,12 @@ button {
     --ink: rgba(255, 255, 255, 0.96);
     --ink-secondary: rgba(235, 235, 245, 0.6);
     --ink-tertiary: rgba(235, 235, 245, 0.3);
-    --glass-tint: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03) 52%, rgba(255, 255, 255, 0));
-    --glass-base: rgba(22, 22, 28, 0.52);
-    --glass-blur: blur(26px) saturate(150%) brightness(0.96);
-    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-tint: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06) 52%, rgba(255, 255, 255, 0.02));
+    --glass-base: rgba(22, 22, 28, 0.7);
+    --glass-blur: blur(30px) saturate(150%) brightness(0.96);
+    --glass-border: rgba(255, 255, 255, 0.14);
     --glass-hairline: rgba(0, 0, 0, 0.5);
-    --glass-shadow: 0 16px 38px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.34);
+    --glass-shadow: 0 16px 38px rgba(0, 0, 0, 0.54), 0 4px 12px rgba(0, 0, 0, 0.36);
     --fill: rgba(120, 120, 128, 0.24);
     --fill-border: rgba(255, 255, 255, 0.08);
   }

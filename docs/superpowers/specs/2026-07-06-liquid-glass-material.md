@@ -28,9 +28,9 @@ Status: Reference spec — applies to the island UI on `feature/island-ui-polish
 **规律**：厚度↑ → 模糊↑、不透明度↑、vibrancy↓。明暗模式自动适配（浅色白底、深色黑底），前景文字通过 vibrancy 与材质混合保证对比度。
 
 本项目映射：
-- **灵动岛本体** → Clear 变体（偏 `thin`，悬浮小控件）
+- **灵动岛本体** → Regular 变体（`regularMaterial`，承载输入框/候选列表等文字密集内容，可读性优先）
 - **命名规则 Tab / 类型选择器 / 候选卡** → Regular（`regularMaterial`，控制层）
-- **状态反馈（success/error）** → Clear + 状态色描边光晕
+- **状态反馈（success/error）** → Regular + 状态色描边光晕
 
 ---
 
@@ -140,7 +140,7 @@ Status: Reference spec — applies to the island UI on `feature/island-ui-polish
 
 | 元素 | 变体 | 说明 |
 |---|---|---|
-| `.island-shell`（岛本体） | Clear | 悬浮在任意桌面内容上方的小面积控件；前景文字图标足够粗足够清晰；默认带轻微暗化兜底 |
+| `.island-shell`（岛本体） | Regular | 承载输入框/候选列表等文字密集内容，可读性优先；悬浮感来自分层阴影 + 顶部高光 + 边缘亮边 |
 | `.rule-tabs` / `.rule-tab-active` | Regular | 控制层，承载文字 |
 | `.type-select` | Regular | 控制层 |
 | `.candidate` | Regular | 候选卡，承载文字 + badge |
@@ -168,7 +168,7 @@ Status: Reference spec — applies to the island UI on `feature/island-ui-polish
 
 ## 10. 验收清单
 
-- [ ] 岛本体 Clear 变体：通透、有高光、有边缘亮边、悬浮感
+- [ ] 岛本体 Regular 变体：稍磨砂、通透有度、有高光、有边缘亮边、悬浮感、文字清晰
 - [ ] 控制层 Regular 变体：稍磨砂、文字清晰、不叠玻璃
 - [ ] 浅色/深色背景上文字均清晰可读（文字 text-shadow + vibrancy 层级）
 - [ ] 大圆角、胶囊形按钮
